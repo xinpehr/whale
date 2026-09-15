@@ -22,6 +22,12 @@ require_once ROOT . '/botapi.php';
 require_once ROOT . '/jdf.php';
 require_once ROOT . '/function.php';
 require_once ROOT . '/panels.php';
+ini_set('display_errors', 'stderr');
+ini_set('log_errors', '0');
+error_reporting(E_ALL & ~E_WARNING & ~E_DEPRECATED & ~E_NOTICE);
+set_exception_handler(function ($e) {
+    echo "\n  FATAL " . get_class($e) . ': ' . $e->getMessage() . ' @ ' . basename($e->getFile()) . ':' . $e->getLine() . "\n";
+});
 $textbotlang = languagechange();
 $ManagePanel = new ManagePanel();
 whale_install();
@@ -331,7 +337,7 @@ ok('add page rejects foreign hosts', strpos($bad['body'], 'happ://add/') === fal
 }
 
 section('purchase from wallet (mini app) with product device limit');
-whale_q("INSERT INTO product (code_product, name_product, price_product, Volume_constraint, Location, Service_time, agent, note, data_limit_reset, one_buy_status, inbounds, proxies, category, hide_panel) VALUES (?, 'E2E plan', '20000', '1', ?, '30', 'f', '', 'no_reset', '0', NULL, NULL, NULL, NULL)", [PROD, $PANEL['name_panel']]);
+whale_q("INSERT INTO product (code_product, name_product, price_product, Volume_constraint, Location, Service_time, agent, note, data_limit_reset, one_buy_status, inbounds, proxies, category, hide_panel) VALUES (?, 'E2E plan', '20000', '1', ?, '30', 'f', '', 'no_reset', '0', NULL, NULL, NULL, '[]')", [PROD, $PANEL['name_panel']]);
 whale_q("INSERT INTO whale_product (code_product, device_limit) VALUES (?, 1)", [PROD]);
 set_balance(U1, 100000);
 [$res, $calls] = mini_purchase(U1, PROD);
