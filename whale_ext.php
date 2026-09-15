@@ -20,14 +20,14 @@ function whale_texts()
 {
     return [
         'fa' => [
-            'test_creating' => '⏳ در حال ساخت اکانت تست شما… چند لحظه صبر کنید.',
+            'test_creating' => '⏳',
             'test_unused_removed' => "🗑 اکانت تست <code>{username}</code> چون در {hours} ساعت گذشته استفاده نشد، حذف شد.\n\n🛍 هر زمان آماده بودید، از بخش خرید سرویس اشتراک تهیه کنید.",
             'service_expired' => "⏳ مدت سرویس <code>{username}</code> به پایان رسید و اتصال آن قطع شد.\n\nبرای ادامه، سرویس را تمدید کنید.",
             'service_limited' => "📊 حجم سرویس <code>{username}</code> تمام شد و اتصال آن قطع شد.\n\nبرای ادامه، سرویس را تمدید کنید.",
             'service_removed_admin' => "🗑 سرویس <code>{username}</code> توسط پشتیبانی حذف شد.\n\nدر صورت داشتن سوال با پشتیبانی در ارتباط باشید.",
         ],
         'en' => [
-            'test_creating' => '⏳ Creating your test account… please wait a moment.',
+            'test_creating' => '⏳',
             'test_unused_removed' => "🗑 Test account <code>{username}</code> was removed because it was not used in the last {hours} hours.\n\n🛍 Whenever you are ready, buy a plan from the shop.",
             'service_expired' => "⏳ Service <code>{username}</code> has expired and is now disconnected.\n\nRenew it to keep using it.",
             'service_limited' => "📊 Service <code>{username}</code> has run out of data and is now disconnected.\n\nRenew it to keep using it.",
