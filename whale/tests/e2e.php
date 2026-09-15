@@ -82,6 +82,17 @@ function cap_since($offset)
     return $rows;
 }
 
+function flat($d)
+{
+    if (isset($d['reply_markup']) && is_string($d['reply_markup'])) {
+        $decoded = json_decode($d['reply_markup'], true);
+        if (is_array($decoded)) {
+            $d['reply_markup'] = $decoded;
+        }
+    }
+    return json_encode($d, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+}
+
 function cap_find(array $calls, $needle, $chat = null)
 {
     foreach ($calls as $c) {
@@ -89,7 +100,7 @@ function cap_find(array $calls, $needle, $chat = null)
         if ($chat !== null && (string) ($d['chat_id'] ?? '') !== (string) $chat) {
             continue;
         }
-        $blob = json_encode($d, JSON_UNESCAPED_UNICODE);
+        $blob = flat($d);
         if (strpos($blob, $needle) !== false) {
             return $c;
         }
@@ -99,6 +110,9 @@ function cap_find(array $calls, $needle, $chat = null)
 
 function cgi($script, $method, $query, $body, array $extraEnv = [])
 {
+    if (!is_file(ROOT . '/' . $script)) {
+        return ['body' => '', 'err' => "missing $script"];
+    }
     $env = [
         'GATEWAY_INTERFACE' => 'CGI/1.1', 'REQUEST_METHOD' => $method, 'SCRIPT_FILENAME' => realpath(ROOT . '/' . $script),
         'SCRIPT_NAME' => '/' . $script, 'REQUEST_URI' => '/' . $script . ($query !== '' ? '?' . $query : ''), 'QUERY_STRING' => $query,
@@ -192,13 +206,14 @@ function latest_invoice($uid, $test = null)
     return whale_q($sql, $params)->fetch(PDO::FETCH_ASSOC);
 }
 
-function kb_has(array $call = null, $needle = '')
+function kb_has(?array $call = null, $needle = '')
 {
     if (!$call) {
         return false;
     }
     $m = $call['data']['reply_markup'] ?? '';
-    $m = is_string($m) ? $m : json_encode($m, JSON_UNESCAPED_UNICODE);
+    $m = is_string($m) ? (json_decode($m, true) ?? $m) : $m;
+    $m = is_string($m) ? $m : json_encode($m, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     return strpos($m, $needle) !== false;
 }
 
@@ -221,10 +236,11 @@ function cleanup()
     foreach (whale_q("SELECT username, Service_location FROM invoice WHERE id_user IN ($in)", $ids)->fetchAll(PDO::FETCH_ASSOC) as $inv) {
         @$ManagePanel->RemoveUser($inv['Service_location'], $inv['username']);
     }
+    whale_q("DELETE FROM cancel_service WHERE username IN (SELECT username FROM invoice WHERE id_user IN ($in))", $ids);
     foreach (["DELETE FROM invoice WHERE id_user IN ($in)", "DELETE FROM Payment_report WHERE id_user IN ($in)", "DELETE FROM service_other WHERE id_user IN ($in)",
         "DELETE FROM whale_balance_log WHERE user_id IN ($in)", "DELETE FROM whale_rating WHERE user_id IN ($in)", "DELETE FROM whale_promo_user WHERE user_id IN ($in)",
-        "DELETE FROM whale_ref_join WHERE user_id IN ($in) OR referrer IN ($in)", "DELETE FROM whale_user_gateway WHERE user_id IN ($in)",
-        "DELETE FROM reagent_report WHERE user_id IN ($in)", "DELETE FROM cancel_service WHERE id_user IN ($in)", "DELETE FROM admin WHERE id_admin IN ($in)", "DELETE FROM user WHERE id IN ($in)"] as $q) {
+        "DELETE FROM whale_ref_join WHERE user_id IN ($in)", "DELETE FROM whale_ref_join WHERE referrer IN ($in)", "DELETE FROM whale_user_gateway WHERE user_id IN ($in)",
+        "DELETE FROM reagent_report WHERE user_id IN ($in)", "DELETE FROM admin WHERE id_admin IN ($in)", "DELETE FROM user WHERE id IN ($in)"] as $q) {
         try {
             whale_q($q, $ids);
         } catch (Throwable $e) {
@@ -302,6 +318,9 @@ if ($test) {
 }
 
 section('one-tap add page');
+if (!is_file(ROOT . '/whale/add.php')) {
+    ok('add page deployed', false, 'whale/add.php missing');
+} else {
 $sub = rtrim($PANEL['linksubx'], '/') . '/abcdef0123456789';
 $u = rtrim(strtr(base64_encode($sub), '+/', '-_'), '=');
 $page = cgi('whale/add.php', 'GET', 'u=' . $u, '');
@@ -309,6 +328,7 @@ ok('add page lists Happ deep link', strpos($page['body'], 'happ://add/') !== fal
 ok('add page lists v2rayNG deep link', strpos($page['body'], 'v2rayng://install-config') !== false);
 $bad = cgi('whale/add.php', 'GET', 'u=' . rtrim(strtr(base64_encode('https://evil.example/sub/x'), '+/', '-_'), '='), '');
 ok('add page rejects foreign hosts', strpos($bad['body'], 'happ://add/') === false);
+}
 
 section('purchase from wallet (mini app) with product device limit');
 whale_q("INSERT INTO product (code_product, name_product, price_product, Volume_constraint, Location, Service_time, agent, note, data_limit_reset, one_buy_status, inbounds, proxies, category, hide_panel) VALUES (?, 'E2E plan', '20000', '1', ?, '30', 'f', '', 'no_reset', '0', NULL, NULL, NULL, NULL)", [PROD, $PANEL['name_panel']]);
