@@ -139,9 +139,7 @@ function whale_xui_full_payload(array $client, array $changes = [])
         'comment' => $client['comment'] ?? '',
         'limitIp' => intval($client['limitIp'] ?? 0),
     ];
-    if (!empty($client['id'])) {
-        $payload['id'] = $client['id'];
-    }
+    // never send the numeric record id: 3x-ui reads "id" as the protocol UUID and rejects the update
     return array_merge($payload, $changes);
 }
 

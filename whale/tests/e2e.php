@@ -254,6 +254,7 @@ function cleanup()
         }
     }
     whale_q("DELETE FROM product WHERE code_product = ?", [PROD]);
+    whale_q("DELETE FROM card_number WHERE cardnumber = '6037000000009999'");
     whale_q("DELETE FROM whale_product WHERE code_product = ?", [PROD]);
     whale_q("DELETE FROM whale_promo WHERE title LIKE 'E2E%'");
     whale_q("DELETE FROM whale_invoice WHERE id_invoice NOT IN (SELECT id_invoice FROM invoice)");
@@ -379,11 +380,13 @@ $log = whale_q("SELECT reason FROM whale_balance_log WHERE user_id = ? ORDER BY 
 ok('balance log reason = extra device', strpos((string) $log, 'دستگاه') !== false, $log);
 
 section('extra device through card-to-card');
+whale_q("INSERT IGNORE INTO card_number (cardnumber, namecard) VALUES ('6037000000009999', 'E2E TEST')");
 set_balance(U1, 0);
 $calls = cb(U1, 'whale_devok_' . $PID);
 $u1 = user_row(U1);
 ok('gateway list shown', (bool) cap_find($calls, 'cart_to_offline'));
 ok('order stored as whale_device', $u1['Processing_value_tow'] === 'whale_device' && $u1['step'] === 'get_step_payment', $u1['Processing_value_tow'] . '/' . $u1['step']);
+ok('amount due raised to gateway minimum (20000)', intval($u1['Processing_value']) === 20000, $u1['Processing_value']);
 $calls = cb(U1, 'cart_to_offline');
 $order = whale_q("SELECT * FROM Payment_report WHERE id_user = ? ORDER BY id DESC LIMIT 1", [U1])->fetch(PDO::FETCH_ASSOC);
 ok('payment report created', $order && strpos($order['id_invoice'], 'whale_device|') === 0, json_encode($order));
@@ -395,7 +398,9 @@ if ($order) {
     ok('card payment confirmed', whale_q("SELECT payment_Status FROM Payment_report WHERE id_order = ?", [$order['id_order']])->fetchColumn() === 'paid');
     ok('limitIp raised to 3 after payment', intval(client($PUSER)['limitIp'] ?? -1) === 3, json_encode(client($PUSER)['limitIp'] ?? null));
     ok('user told device added', (bool) cap_find($calls, 'سقف دستگاه', U1));
+    ok('extra paid amount kept in wallet (20000 - 10000)', intval(user_row(U1)['Balance']) === 10000, user_row(U1)['Balance']);
 }
+whale_q("DELETE FROM card_number WHERE cardnumber = '6037000000009999'");
 
 section('gateway rules');
 set_balance(U1, 0);
@@ -486,7 +491,8 @@ whale_q("UPDATE affiliates SET porsant_one_buy = 'off_buy_porsant'");
 whale_set('commission_min_amount', 0);
 set_balance(U2, 0);
 set_balance(U1, 100000);
-mini_purchase(U1, PROD);
+[$pr] = mini_purchase(U1, PROD);
+ok('purchase for commission test succeeded', !empty($pr['success']), json_encode($pr, JSON_UNESCAPED_UNICODE));
 ok('commission paid when above minimum', intval(user_row(U2)['Balance']) === 2000, user_row(U2)['Balance']);
 whale_set('commission_min_amount', 50000);
 set_balance(U2, 0);

@@ -431,6 +431,10 @@ function whale_device_confirm($user_id, $message_id, $id_invoice)
         return;
     }
     $due = $price - max(0, $balance);
+    // gateways have a minimum deposit; the extra stays in the wallet (whale_direct_payment credits the full payment)
+    $minCard = intval(select("PaySetting", "ValuePay", "NamePay", "minbalancecart", "select")['ValuePay'] ?? 0);
+    $minAgent = intval(json_decode((string) (select("PaySetting", "ValuePay", "NamePay", "minbalance", "select")['ValuePay'] ?? ''), true)[$user['agent'] ?? 'f'] ?? 0);
+    $due = max($due, $minCard, $minAgent);
     whale_start_gateway_payment($user_id, $due, 'whale_device', $id_invoice, whale_t('no_credit', ['price' => whale_money($due)], $user_id));
 }
 
