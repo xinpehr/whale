@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0A1A33">
+  <meta name="robots" content="noindex">
+  <title>WhaleVPN</title>
+  <link rel="preload" href="/app/fonts/Vazir-Medium.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="app.css">
+  <script src="/app/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <div class="backdrop" aria-hidden="true"></div>
+
+  <header class="topbar" id="topbar">
+    <button class="topbar__back" id="back" type="button" hidden aria-label="بازگشت">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <a class="brand" href="#/" aria-label="WhaleVPN، صفحه اصلی">
+      <svg class="brand__glyph" viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
+        <defs>
+          <linearGradient id="wg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#8AD8FF"/><stop offset="1" stop-color="#38B6FF"/>
+          </linearGradient>
+        </defs>
+        <path d="M13 8.2c0-2 -1-3.2-2.2-4.2M13 8.2c0-2 1-3.2 2.2-4.2" fill="none" stroke="#5CC6FF" stroke-width="1.6" stroke-linecap="round"/>
+        <path d="M3.5 18.5C3.5 13 8.2 9.5 14.2 9.5c5.6 0 9.6 2.9 11 6.6l3.2-3.7c.8-.9 2.2-.2 1.9 1l-1.5 5.2 1.5 5.1c.3 1.2-1.1 1.9-1.9 1l-3.3-3.8c-2 4.3-6.5 6.6-11.6 6.6-5.8 0-10-3.4-10-9z" fill="url(#wg)"/>
+        <path d="M5.2 21.4c2.6 2.6 6.4 3.7 10.8 3.1" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.4" stroke-linecap="round"/>
+        <circle cx="9.4" cy="16.4" r="1.3" fill="#0A1A33"/>
+      </svg>
+      <span class="brand__word" dir="ltr">Whale<b>VPN</b></span>
+    </a>
+    <span class="demo-badge" id="demo-badge" hidden>🧪 نسخه نمایشی</span>
+  </header>
+
+  <main id="view" class="view" tabindex="-1"></main>
+
+  <nav class="tabbar" id="tabbar" aria-label="بخش‌های اصلی">
+    <a class="tab" href="#/" data-tab="/">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7.5 3v5.4c0 4.6-3.1 8.4-7.5 9.6-4.4-1.2-7.5-5-7.5-9.6V6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.8 12.2l2.2 2.2 4.3-4.4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>سرویس‌ها</span>
+    </a>
+    <a class="tab" href="#/buy" data-tab="/buy">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>خرید</span>
+    </a>
+    <a class="tab" href="#/wallet" data-tab="/wallet">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 10h18" stroke="currentColor" stroke-width="2"/><circle cx="16.5" cy="14.5" r="1.4" fill="currentColor"/></svg>
+      <span>کیف پول</span>
+    </a>
+  </nav>
+
+  <div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+  <dialog class="sheet" id="confirm" aria-labelledby="confirm-title">
+    <form method="dialog" class="sheet__body">
+      <h2 class="sheet__title" id="confirm-title">تأیید</h2>
+      <p class="sheet__msg" id="confirm-msg"></p>
+      <div class="sheet__actions">
+        <button class="btn btn--primary" value="ok" id="confirm-ok">تأیید</button>
+        <button class="btn btn--ghost" value="cancel">✖️ انصراف</button>
+      </div>
+    </form>
+  </dialog>
+
+  <noscript><p class="noscript">برای استفاده از WhaleVPN جاوااسکریپت را فعال کنید.</p></noscript>
+  <script src="app.js" defer></script>
+</body>
+</html>
