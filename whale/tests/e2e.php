@@ -491,9 +491,18 @@ whale_q("UPDATE affiliates SET porsant_one_buy = 'off_buy_porsant'");
 whale_set('commission_min_amount', 0);
 set_balance(U2, 0);
 set_balance(U1, 100000);
-[$pr] = mini_purchase(U1, PROD);
+[$pr, $prCalls] = mini_purchase(U1, PROD);
 ok('purchase for commission test succeeded', !empty($pr['success']), json_encode($pr, JSON_UNESCAPED_UNICODE));
-ok('commission paid when above minimum', intval(user_row(U2)['Balance']) === 2000, user_row(U2)['Balance']);
+$diag = [
+    'pct' => whale_q("SELECT affiliatespercentage FROM setting")->fetchColumn(),
+    'u1_affiliates' => user_row(U1)['affiliates'],
+    'aff' => whale_q("SELECT status_commission, porsant_one_buy FROM affiliates")->fetch(PDO::FETCH_ASSOC),
+    'min' => whale_get('commission_min_amount'),
+    'u2_log' => whale_q("SELECT delta, reason FROM whale_balance_log WHERE user_id = ? ORDER BY id DESC LIMIT 3", [U2])->fetchAll(PDO::FETCH_ASSOC),
+    'calls_to_u2' => array_map(fn($c) => mb_substr($c['data']['text'] ?? '', 0, 80), array_values(array_filter($prCalls, fn($c) => (string) ($c['data']['chat_id'] ?? '') === U2))),
+    'report' => array_map(fn($c) => mb_substr($c['data']['text'] ?? '', 0, 80), array_values(array_filter($prCalls, fn($c) => strpos($c['data']['text'] ?? '', 'پورسانت') !== false))),
+];
+ok('commission paid when above minimum', intval(user_row(U2)['Balance']) === 2000, user_row(U2)['Balance'] . ' ' . json_encode($diag, JSON_UNESCAPED_UNICODE));
 whale_set('commission_min_amount', 50000);
 set_balance(U2, 0);
 mini_purchase(U1, PROD);
