@@ -1,0 +1,185 @@
+<?php
+/*
+ * WhaleVPN user-facing texts (fa + en). Placeholders use {name}.
+ */
+
+function whale_texts()
+{
+    return [
+        'fa' => [
+            'test_creating' => '⏳',
+            'test_unused_removed' => "🗑 اکانت تست <code>{username}</code> چون در {hours} ساعت گذشته استفاده نشد، حذف شد.\n\n🛍 هر زمان آماده بودید، از بخش خرید سرویس اشتراک تهیه کنید.",
+            'service_expired' => "⏳ مدت سرویس <code>{username}</code> به پایان رسید و اتصال آن قطع شد.\n\nبرای ادامه، سرویس را تمدید کنید.",
+            'service_limited' => "📊 حجم سرویس <code>{username}</code> تمام شد و اتصال آن قطع شد.\n\nبرای ادامه، سرویس را تمدید کنید.",
+            'service_removed_admin' => "🗑 سرویس <code>{username}</code> توسط پشتیبانی حذف شد.\n\nدر صورت داشتن سوال با پشتیبانی در ارتباط باشید.",
+            'all_locations' => 'همه‌ی لوکیشن‌ها داخل ساب',
+            'btn_oneclick' => '📲 افزودن به اپ با یک لمس',
+            'btn_devices' => '📱 دستگاه‌ها: {limit}',
+            'btn_devices_unlimited' => '📱 دستگاه‌ها: نامحدود',
+            'btn_device_buy' => '➕ خرید دستگاه اضافه',
+            'btn_renew' => '💊 تمدید سرویس',
+            'btn_support' => '💬 پشتیبانی',
+            'btn_wallet_log' => '📜 گردش کیف پول',
+            'btn_confirm_pay' => '✅ پرداخت {price} تومان',
+            'btn_continue_pay' => '💳 ادامه‌ی پرداخت',
+            'btn_back' => '🔙 بازگشت',
+            'service_devices_line' => '📱 محدودیت دستگاه همزمان: {limit}',
+            'devices_info' => "📱 <b>دستگاه‌های سرویس</b> <code>{username}</code>\n\nسقف دستگاه همزمان: <b>{limit}</b>\nدستگاه‌های متصل در این لحظه: <b>{online}</b>\n\nاگر دستگاه بیشتری از سقف همزمان وصل شود، اتصال دستگاه اضافه موقتاً قطع می‌شود.",
+            'device_buy_prompt' => "➕ <b>خرید دستگاه اضافه</b>\n\nسرویس: <code>{username}</code>\nسقف فعلی: {limit} دستگاه\nسقف جدید: {new_limit} دستگاه\n💰 مبلغ: <b>{price}</b> تومان\n💳 موجودی شما: {balance} تومان",
+            'device_not_sold' => '📱 خرید دستگاه اضافه در حال حاضر فعال نیست.',
+            'device_unlimited' => '📱 این سرویس محدودیت دستگاه ندارد.',
+            'device_done' => "✅ سقف دستگاه سرویس <code>{username}</code> به <b>{limit}</b> رسید.",
+            'device_failed' => '❌ اعمال دستگاه اضافه روی سرور ناموفق بود. مبلغی کسر نشد. لطفاً کمی بعد دوباره تلاش کنید.',
+            'no_credit' => "💳 موجودی شما کافی نیست.\nمبلغ باقی: <b>{price}</b> تومان\n\nروش پرداخت را انتخاب کنید:",
+            'no_credit_topup' => "💳 موجودی شما کافی نیست. ابتدا کیف پول را شارژ کنید.",
+            'refund_estimate' => "💰 مبلغ پرداختی برای این سرویس: <b>{paid}</b> تومان\n↩️ مبلغ تقریبی قابل برگشت به کیف پول: <b>{refund}</b> تومان\n<i>(مبلغ نهایی پس از بررسی پشتیبانی تعیین می‌شود)</i>",
+            'renew_blocked' => "⛔️ هنوز زمان تمدید این سرویس نرسیده است.\n\n⏳ روز باقی: <b>{days}</b>\n📊 حجم باقی: <b>{percent}٪</b>\n\nتمدید وقتی فعال می‌شود که {rule}.",
+            'renew_rule_days' => 'حداکثر {days} روز باقی مانده باشد',
+            'renew_rule_percent' => 'حداکثر {percent}٪ از حجم باقی مانده باشد',
+            'renew_rule_or' => ' یا ',
+            'nudge_paid' => "👋 سلام! سرویس <code>{username}</code> شما آماده است ولی هنوز به آن وصل نشده‌اید.\n\nبا دکمه‌ی زیر اشتراک را با یک لمس به اپ اضافه کنید. اگر مشکلی داشتید، پشتیبانی کنار شماست.",
+            'nudge_test' => "👋 اکانت تست <code>{username}</code> هنوز استفاده نشده است.\n\nبا دکمه‌ی زیر آن را با یک لمس به اپ اضافه کنید و سرعت WhaleVPN را امتحان کنید.",
+            'rating_ask' => "⭐️ تجربه‌ی شما از سرویس <code>{username}</code> چطور بوده؟\n\nبه ما از ۱ تا ۵ امتیاز بدهید.",
+            'rating_thanks' => '🙏 ممنون از امتیاز شما!',
+            'rating_ask_comment' => "😔 متأسفیم که تجربه‌ی خوبی نداشتید.\n\nلطفاً در یک پیام بنویسید چه مشکلی بود تا بررسی کنیم. (برای رد کردن /skip را بفرستید)",
+            'rating_comment_thanks' => '🙏 پیام شما برای تیم ارسال شد. ممنون که کمک می‌کنید بهتر شویم.',
+            'rating_report' => "⭐️ <b>امتیاز جدید</b>\nکاربر: <code>{user_id}</code>\nسرویس: <code>{username}</code>\nامتیاز: {stars} ({rating}/5)",
+            'rating_comment_report' => "💬 <b>توضیح امتیاز</b>\nکاربر: <code>{user_id}</code>\nسرویس: <code>{username}</code>\nامتیاز: {rating}/5\n\n{comment}",
+            'gateway_hidden' => '🔒 این روش پرداخت برای حساب شما فعال نیست.',
+            'no_gateway' => '🔒 روش پرداخت فعالی برای حساب شما نیست — به پشتیبانی پیام دهید',
+            'wallet_log_title' => "📜 <b>گردش کیف پول</b>\n",
+            'wallet_log_empty' => "📜 هنوز تراکنشی در کیف پول شما ثبت نشده است.",
+            'wallet_log_line' => "{sign} <b>{amount}</b> تومان — {reason}\n<i>{date} · موجودی: {balance}</i>",
+            'reason_topup' => 'شارژ کیف پول',
+            'reason_admin_add' => 'افزایش توسط پشتیبانی',
+            'reason_admin_low' => 'کسر توسط پشتیبانی',
+            'reason_buy' => 'خرید سرویس {username}',
+            'reason_renew' => 'تمدید سرویس {username}',
+            'reason_extra' => 'خرید حجم/زمان اضافه',
+            'reason_device' => 'خرید دستگاه اضافه {username}',
+            'reason_refund' => 'برگشت وجه',
+            'reason_commission' => 'پورسانت زیرمجموعه',
+            'reason_gift' => 'هدیه',
+            'reason_other_in' => 'واریز',
+            'reason_other_out' => 'برداشت',
+            'commission_renew' => "🎁 زیرمجموعه‌ی شما سرویسش را تمدید کرد و <b>{amount}</b> تومان پورسانت به کیف پول شما اضافه شد.",
+            'commission_renew_report' => "💸 <b>پورسانت تمدید</b>\nمعرف: <code>{referrer}</code>\nکاربر: <code>{user_id}</code>\nمبلغ تمدید: {price}\nپورسانت: {amount} ({percent}٪)",
+            'start_gift_after_purchase' => '🎁 هدیه‌ی عضویت بعد از اولین خرید شما فعال می‌شود.',
+            'ref_alert' => "⚠️ <b>هشدار زیرمجموعه‌گیری مشکوک</b>\nمعرف <code>{referrer}</code> در یک ساعت گذشته <b>{count}</b> کاربر جدید آورده است.\nخریدار از زیرمجموعه‌های او: {buyers} از {total}",
+            'topup_prompt' => "💳 <b>افزایش موجودی</b>\nمبلغ: <b>{amount}</b> تومان\n\nروش پرداخت را انتخاب کنید:",
+            'miniapp_pay_topup' => "💳 درخواست افزایش موجودی <b>{amount}</b> تومان از مینی‌اپ ثبت شد.\nبرای پرداخت روی دکمه‌ی زیر بزنید.",
+            'miniapp_pay_renew' => "💊 تمدید سرویس <code>{username}</code> — مبلغ باقی <b>{amount}</b> تومان.\nبرای پرداخت روی دکمه‌ی زیر بزنید.",
+            'miniapp_pay_device' => "📱 خرید دستگاه اضافه برای <code>{username}</code> — مبلغ باقی <b>{amount}</b> تومان.\nبرای پرداخت روی دکمه‌ی زیر بزنید.",
+            'miniapp_pay_buy' => "🛍 خرید سرویس — مبلغ باقی <b>{amount}</b> تومان.\nبرای پرداخت روی دکمه‌ی زیر بزنید.",
+            'api_pay_in_bot' => '💬 برای تکمیل پرداخت، پیامی در ربات برایتان ارسال شد.',
+            'renew_done' => "✅ سرویس <code>{username}</code> با موفقیت تمدید شد.\n💰 مبلغ: {price} تومان",
+            'renew_failed' => '❌ تمدید سرویس روی سرور ناموفق بود. مبلغی کسر نشد. با پشتیبانی تماس بگیرید.',
+            'invalid_amount' => '⚠️ مبلغ باید بین {min} و {max} تومان باشد.',
+            'panel_down' => "🚨 <b>پنل {panel} در دسترس نیست</b>\nخطا: <code>{error}</code>\n\nفروش روی این پنل موقتاً غیرفعال شد و بعد از برگشتن پنل خودکار فعال می‌شود.",
+            'panel_up' => "✅ <b>پنل {panel} دوباره در دسترس است</b>\nمدت قطعی: {duration}\nفروش دوباره فعال شد.",
+            'test_nudge_done' => '',
+        ],
+        'en' => [
+            'test_creating' => '⏳',
+            'test_unused_removed' => "🗑 Test account <code>{username}</code> was removed because it was not used in the last {hours} hours.\n\n🛍 Whenever you are ready, buy a plan from the shop.",
+            'service_expired' => "⏳ Service <code>{username}</code> has expired and is now disconnected.\n\nRenew it to keep using it.",
+            'service_limited' => "📊 Service <code>{username}</code> has run out of data and is now disconnected.\n\nRenew it to keep using it.",
+            'service_removed_admin' => "🗑 Service <code>{username}</code> was removed by support.\n\nContact support if you have any questions.",
+            'all_locations' => 'all locations are inside the subscription',
+            'btn_oneclick' => '📲 Add to app in one tap',
+            'btn_devices' => '📱 Devices: {limit}',
+            'btn_devices_unlimited' => '📱 Devices: unlimited',
+            'btn_device_buy' => '➕ Buy an extra device',
+            'btn_renew' => '💊 Renew service',
+            'btn_support' => '💬 Support',
+            'btn_wallet_log' => '📜 Wallet history',
+            'btn_confirm_pay' => '✅ Pay {price} Toman',
+            'btn_continue_pay' => '💳 Continue to payment',
+            'btn_back' => '🔙 Back',
+            'service_devices_line' => '📱 Simultaneous devices: {limit}',
+            'devices_info' => "📱 <b>Devices of</b> <code>{username}</code>\n\nSimultaneous limit: <b>{limit}</b>\nConnected right now: <b>{online}</b>\n\nIf more devices than the limit connect at once, the extra device is temporarily disconnected.",
+            'device_buy_prompt' => "➕ <b>Extra device</b>\n\nService: <code>{username}</code>\nCurrent limit: {limit}\nNew limit: {new_limit}\n💰 Price: <b>{price}</b> Toman\n💳 Your balance: {balance} Toman",
+            'device_not_sold' => '📱 Extra devices are not on sale right now.',
+            'device_unlimited' => '📱 This service has no device limit.',
+            'device_done' => "✅ Device limit of <code>{username}</code> is now <b>{limit}</b>.",
+            'device_failed' => '❌ Applying the extra device failed. Nothing was charged. Please try again later.',
+            'no_credit' => "💳 Your balance is not enough.\nAmount due: <b>{price}</b> Toman\n\nChoose a payment method:",
+            'no_credit_topup' => "💳 Your balance is not enough. Top up your wallet first.",
+            'refund_estimate' => "💰 Paid for this service: <b>{paid}</b> Toman\n↩️ Estimated refund to wallet: <b>{refund}</b> Toman\n<i>(final amount is set after support review)</i>",
+            'renew_blocked' => "⛔️ It is too early to renew this service.\n\n⏳ Days left: <b>{days}</b>\n📊 Data left: <b>{percent}%</b>\n\nRenewal opens when {rule}.",
+            'renew_rule_days' => 'at most {days} days are left',
+            'renew_rule_percent' => 'at most {percent}% of the data is left',
+            'renew_rule_or' => ' or ',
+            'nudge_paid' => "👋 Hi! Your service <code>{username}</code> is ready but you have not connected yet.\n\nUse the button below to add it to your app in one tap. Support is here if you need help.",
+            'nudge_test' => "👋 Your test account <code>{username}</code> has not been used yet.\n\nAdd it to your app in one tap with the button below and try WhaleVPN.",
+            'rating_ask' => "⭐️ How is your experience with <code>{username}</code>?\n\nRate us from 1 to 5.",
+            'rating_thanks' => '🙏 Thanks for your rating!',
+            'rating_ask_comment' => "😔 Sorry it was not great.\n\nPlease tell us in one message what went wrong. (send /skip to skip)",
+            'rating_comment_thanks' => '🙏 Your message was sent to the team. Thanks for helping us improve.',
+            'rating_report' => "⭐️ <b>New rating</b>\nUser: <code>{user_id}</code>\nService: <code>{username}</code>\nRating: {stars} ({rating}/5)",
+            'rating_comment_report' => "💬 <b>Rating comment</b>\nUser: <code>{user_id}</code>\nService: <code>{username}</code>\nRating: {rating}/5\n\n{comment}",
+            'gateway_hidden' => '🔒 This payment method is not available for your account.',
+            'no_gateway' => 'No payment method is available for your account — contact support',
+            'wallet_log_title' => "📜 <b>Wallet history</b>\n",
+            'wallet_log_empty' => "📜 No wallet transactions yet.",
+            'wallet_log_line' => "{sign} <b>{amount}</b> Toman — {reason}\n<i>{date} · balance: {balance}</i>",
+            'reason_topup' => 'Wallet top-up',
+            'reason_admin_add' => 'Added by support',
+            'reason_admin_low' => 'Deducted by support',
+            'reason_buy' => 'Purchase {username}',
+            'reason_renew' => 'Renewal {username}',
+            'reason_extra' => 'Extra data/time',
+            'reason_device' => 'Extra device {username}',
+            'reason_refund' => 'Refund',
+            'reason_commission' => 'Referral commission',
+            'reason_gift' => 'Gift',
+            'reason_other_in' => 'Credit',
+            'reason_other_out' => 'Debit',
+            'commission_renew' => "🎁 Your referral renewed their service and <b>{amount}</b> Toman commission was added to your wallet.",
+            'commission_renew_report' => "💸 <b>Renewal commission</b>\nReferrer: <code>{referrer}</code>\nUser: <code>{user_id}</code>\nRenewal price: {price}\nCommission: {amount} ({percent}%)",
+            'start_gift_after_purchase' => '🎁 The membership gift unlocks after your first purchase.',
+            'ref_alert' => "⚠️ <b>Suspicious referrals</b>\nReferrer <code>{referrer}</code> brought <b>{count}</b> new users in the last hour.\nBuyers among their referrals: {buyers} of {total}",
+            'topup_prompt' => "💳 <b>Top up</b>\nAmount: <b>{amount}</b> Toman\n\nChoose a payment method:",
+            'miniapp_pay_topup' => "💳 Top-up request of <b>{amount}</b> Toman from the mini app.\nTap the button below to pay.",
+            'miniapp_pay_renew' => "💊 Renewal of <code>{username}</code> — amount due <b>{amount}</b> Toman.\nTap the button below to pay.",
+            'miniapp_pay_device' => "📱 Extra device for <code>{username}</code> — amount due <b>{amount}</b> Toman.\nTap the button below to pay.",
+            'miniapp_pay_buy' => "🛍 Purchase — amount due <b>{amount}</b> Toman.\nTap the button below to pay.",
+            'api_pay_in_bot' => '💬 A payment message was sent to you in the bot.',
+            'renew_done' => "✅ Service <code>{username}</code> was renewed.\n💰 Price: {price} Toman",
+            'renew_failed' => '❌ Renewal failed on the server. Nothing was charged. Please contact support.',
+            'invalid_amount' => '⚠️ Amount must be between {min} and {max} Toman.',
+            'panel_down' => "🚨 <b>Panel {panel} is unreachable</b>\nError: <code>{error}</code>\n\nSales on this panel are paused and resume automatically when it is back.",
+            'panel_up' => "✅ <b>Panel {panel} is back</b>\nDowntime: {duration}\nSales resumed.",
+            'test_nudge_done' => '',
+        ],
+    ];
+}
+
+function whale_user_lang($user_id)
+{
+    $user = $user_id ? select("user", "*", "id", $user_id, "select") : false;
+    return is_array($user) && !empty($user['lang']) ? $user['lang'] : 'fa';
+}
+
+function whale_t($key, array $vars = [], $user_id = null)
+{
+    $texts = whale_texts();
+    $lang = $user_id ? whale_user_lang($user_id) : 'fa';
+    $set = $texts[$lang] ?? ($lang === 'fa' ? $texts['fa'] : $texts['en']);
+    $text = $set[$key] ?? ($texts['fa'][$key] ?? $key);
+    $pairs = [];
+    foreach ($vars as $k => $v) {
+        $pairs[$k[0] === '{' ? $k : '{' . $k . '}'] = (string) $v;
+    }
+    return strtr($text, $pairs);
+}
+
+// Honors the per-user notification switch (user.status_cron) and reseller bot tokens.
+function whale_send_user($user_id, $text, $keyboard = null, $bot_token = null)
+{
+    $user = select("user", "*", "id", $user_id, "select");
+    if (is_array($user) && isset($user['status_cron']) && intval($user['status_cron']) === 0) {
+        return false;
+    }
+    return sendmessage($user_id, $text, $keyboard, 'HTML', $bot_token ?: null);
+}

@@ -137,6 +137,7 @@ $keyboardPanel = json_encode([
     ],
     'resize_keyboard' => true
 ]);
+$keyboardPanel = whale_account_keyboard($keyboardPanel); // WhaleVPN
 if ($adminrulecheck['rule'] == "administrator") {
     $keyboardadmin = json_encode([
         'keyboard' => [
@@ -346,6 +347,7 @@ $step_payment['inline_keyboard'][] = [
     ['text' => $textbotlang['keyboard']['closeList'], 'callback_data' => "colselist"]
 ];
 $step_payment = json_encode($step_payment);
+$step_payment = whale_filter_payment_keyboard($step_payment, $from_id); // WhaleVPN
 $keyboardhelpadmin = json_encode([
     'keyboard' => [
         [['text' => $textbotlang['keyboard']['addEducation']], ['text' => $textbotlang['keyboard']['deleteEducation']]],

@@ -14,6 +14,7 @@ $marzbanlist = select("marzban_panel", "*",null ,null ,"fetchAll");
 $setting = select("setting", "*");
 $status_cron = json_decode($setting['cron_status'],true);
 if(!$status_cron['uptime_panel'])return;
+if (whale_uptime_panel_takeover()) return; // WhaleVPN: handled by whale_panel_health_tick
 $inbounds = [];
 foreach($marzbanlist as $location){
     $parsed_url = parse_url($location['url_panel']);

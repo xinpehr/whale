@@ -210,6 +210,7 @@ if (floor($TimeLastMessage / 60) >= 1) {
 }
 
 
+$text = whale_early_update($text); // WhaleVPN
 if (strpos($text, "/start ") !== false && $user['step'] != "gettextSystemMessage") {
     $affiliatesid = explode(" ", $text)[1];
     if (!in_array($affiliatesid, ['start', "usertest", "/start", "buy", "help"])) {
@@ -369,6 +370,7 @@ if ($user['joinchannel'] != "active") {
         }
     }
 }
+if (whale_handle_update()) return; // WhaleVPN
 if ($text == "/start" || $datain == "start" || $text == "start") {
     sendmessage($from_id, $textbotlang['users']['text_start'], $keyboard, "html");
     update("user", "Processing_value", "0", "id", $from_id);
@@ -1117,6 +1119,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
         }
         $textinfo = sprintf($textbotlang['users']['status']['infoFull'], $status_var, $DataUserOut['username'], $userpassword, $nameconfig, $nameloc['Service_location'], $nameloc['name_product'], $LastTraffic, $usedTrafficGb, $RemainingVolume, $Percent, $expirationDate, $day, $textconnect);
     }
+    $keyboardsetting = whale_service_keyboard($keyboardsetting, $nameloc, $DataUserOut); $textinfo = whale_service_text($textinfo, $nameloc, $DataUserOut); // WhaleVPN
     if ($user['step'] == "getuseragnetservice") {
         sendmessage($from_id, $textinfo, $keyboardsetting, 'html');
     } elseif ($datain == "productcheckdata") {
@@ -1402,6 +1405,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
         sendmessage($from_id, $textbotlang['users']['extend']['connectFirst'], null, 'html');
         return;
     }
+    if (whale_renew_blocked($from_id, $nameloc, $DataUserOut)) return; // WhaleVPN
     $eextraprice = json_decode($marzban_list_get['pricecustomvolume'], true);
     $custompricevalue = $eextraprice[$user['agent']];
     $mainvolume = json_decode($marzban_list_get['mainvolume'], true);
@@ -1585,7 +1589,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
         $product['name_product'] = $nameloc['name_product'];
         $product['code_product'] = "customvolume";
         $product['note'] = "";
-        $product['price_product'] = (intval($userdate['volume']) * $custompricevalue) + ($text * $customtimevalueprice);
+        $product['price_product'] = whale_volume_price(intval($userdate['volume']), $custompricevalue, $user['agent']) + ($text * $customtimevalueprice);
         $product['Service_time'] = $text;
         $product['Volume_constraint'] = $userdate['volume'];
         step("home", $from_id);
@@ -1686,7 +1690,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
     if ($nameloc['name_product'] == $textbotlang['users']['customSellVolume']['btnVolume'] || $nameloc['name_product'] == $textbotlang['users']['customSellVolume']['btnService']) {
         $info_product['code_product'] = "pre";
         $info_product['name_product'] = $nameloc['name_product'];
-        $info_product['price_product'] = ($userdate['data_limit'] * $custompricevalue) + ($userdate['time'] * $customtimevalueprice);
+        $info_product['price_product'] = whale_volume_price($userdate['data_limit'], $custompricevalue, $user['agent']) + ($userdate['time'] * $customtimevalueprice);
         $info_product['Service_time'] = $userdate['time'];
         $info_product['Volume_constraint'] = $userdate['data_limit'];
     } else {
@@ -1738,7 +1742,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
     if ($nameloc['name_product'] == $textbotlang['users']['customSellVolume']['btnVolume'] || $nameloc['name_product'] == $textbotlang['users']['customSellVolume']['btnService']) {
         $prodcut['code_product'] = "custom_volume";
         $prodcut['name_product'] = $nameloc['name_product'];
-        $prodcut['price_product'] = ($userdata['data_limit'] * $custompricevalue) + ($userdata['time'] * $customtimevalueprice);
+        $prodcut['price_product'] = whale_volume_price($userdata['data_limit'], $custompricevalue, $user['agent']) + ($userdata['time'] * $customtimevalueprice);
         $prodcut['Service_time'] = $userdata['time'];
         $prodcut['Volume_constraint'] = $userdata['data_limit'];
         $prodcut['inbounds'] = $marzban_list_get['inboundid'];
@@ -1882,6 +1886,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
     $extend_json = json_encode($extend);
     $stmt->execute([$from_id, $nameloc['username'], $value, $type, $dateacc, $prodcut['price_product'], $extend_json, $status]);
     update("invoice", "Status", "active", "id_invoice", $id_invoice);
+    whale_after_renew($from_id, $pricelastextend, $nameloc['username']); // WhaleVPN
     if (intval($setting['scorestatus']) == 1 and !in_array($from_id, $admin_ids)) {
         sendmessage($from_id, $textbotlang['users']['affiliates']['pointsEarned2Alt'], null, 'html');
         $scorenew = $user['score'] + 2;
@@ -2758,7 +2763,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
             ],
         ]
     ]);
-    sendmessage($from_id, $textbotlang['users']['status']['descriptionsRemoveService'], $confirmremove, "html");
+    sendmessage($from_id, whale_refund_text($textbotlang['users']['status']['descriptionsRemoveService'], $nameloc, $DataUserOut), $confirmremove, "html"); // WhaleVPN
     step("home", $from_id);
 } elseif (preg_match('/confirmremoveservices-(\w+)/', $datain, $dataget)) {
     $userdata = json_decode($user['Processing_value'], true);
@@ -3681,6 +3686,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
     $maxvolume = json_decode($marzban_list_get['maxvolume'], true);
     $maxvolume = $maxvolume[$user['agent']];
     $textcustom = sprintf($textbotlang['users']['sell']['customVolumePrompt5'], $custompricevalue, $mainvolume, $maxvolume);
+    whale_send_price_tiers($from_id, $user['agent']); // WhaleVPN
     sendmessage($from_id, $textcustom, $backuser, 'html');
     deletemessage($from_id, $message_id);
     step('gettimecustomvol', $from_id);
@@ -3796,7 +3802,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
         $info_product['name_product'] = $textbotlang['users']['customSellVolume']['title'];
         $info_product['code_product'] = $textbotlang['users']['customSellVolume']['title'];
         $info_product['Service_time'] = $parts[1];
-        $info_product['price_product'] = ($parts[2] * $custompricevalue) + ($parts[1] * $customtimevalueprice);
+        $info_product['price_product'] = whale_volume_price($parts[2], $custompricevalue, $user['agent']) + ($parts[1] * $customtimevalueprice);
     } else {
         $info_product = $pdo->prepare("SELECT * FROM product WHERE code_product = :code_product AND (Location = :location OR Location = '/all') LIMIT 1");
         $info_product->bindValue(':code_product', $loc, PDO::PARAM_STR);
@@ -3870,7 +3876,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
         $info_product['name_product'] = $textbotlang['users']['customSellVolume']['title'];
         $info_product['code_product'] = "customvolume";
         $info_product['Service_time'] = $parts[1];
-        $info_product['price_product'] = ($parts[2] * $custompricevalue) + ($parts[1] * $customtimevalueprice);
+        $info_product['price_product'] = whale_volume_price($parts[2], $custompricevalue, $user['agent']) + ($parts[1] * $customtimevalueprice);
         $info_product['data_limit_reset'] = "no_reset";
     } else {
         $stmt = $pdo->prepare("SELECT * FROM product WHERE code_product = :code_product AND (Location = :location OR Location = '/all') LIMIT 1");
@@ -4076,7 +4082,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
     $stmt->bindParam(':name_product', $textbotlang['common']['labels']['testServiceName']);
     $stmt->execute();
     $countinvoice = $stmt->rowCount();
-    if ($affiliatescommission['status_commission'] == "oncommission" && ($user['affiliates'] != null && intval($user['affiliates']) != 0)) {
+    if ($affiliatescommission['status_commission'] == "oncommission" && ($user['affiliates'] != null && intval($user['affiliates']) != 0) && whale_commission_allowed($priceproduct)) {
         if ($marzbanporsant_one_buy['porsant_one_buy'] == "on_buy_porsant") {
             if ($countinvoice == 1) {
                 $result = ($priceproduct * $setting['affiliatespercentage']) / 100;
@@ -4229,7 +4235,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
         $info_product['name_product'] = $textbotlang['users']['customSellVolume']['title'];
         $info_product['code_product'] = $textbotlang['users']['customSellVolume']['title'];
         $info_product['Service_time'] = $parts[1];
-        $info_product['price_product'] = ($parts[2] * $custompricevalue) + ($parts[1] * $customtimevalueprice);
+        $info_product['price_product'] = whale_volume_price($parts[2], $custompricevalue, $user['agent']) + ($parts[1] * $customtimevalueprice);
     } else {
         $stmt = $pdo->prepare("SELECT * FROM product WHERE code_product = :code_product AND (Location = :location OR Location = '/all') LIMIT 1");
         $stmt->bindValue(':code_product', $user['Processing_value_one'], PDO::PARAM_STR);
@@ -4424,7 +4430,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
         $info_product['name_product'] = $textbotlang['users']['customSellVolume']['title'];
         $info_product['code_product'] = $textbotlang['users']['customSellVolume']['title'];
         $info_product['Service_time'] = $parts[1];
-        $info_product['price_product'] = ($parts[2] * $custompricevalue) + ($parts[1] * $customtimevalueprice);
+        $info_product['price_product'] = whale_volume_price($parts[2], $custompricevalue, $user['agent']) + ($parts[1] * $customtimevalueprice);
     } else {
         $__q8 = $pdo->prepare("SELECT * FROM product WHERE code_product = ? AND (Location = ? or Location = '/all') LIMIT 1");
         $__q8->bindValue(1, $loc, PDO::PARAM_STR);
@@ -4458,7 +4464,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
         $info_product['name_product'] = $textbotlang['users']['customSellVolume']['title'];
         $info_product['code_product'] = "customvolume";
         $info_product['Service_time'] = $parts[1];
-        $info_product['price_product'] = ($parts[2] * $custompricevalue) + ($parts[1] * $customtimevalueprice);
+        $info_product['price_product'] = whale_volume_price($parts[2], $custompricevalue, $user['agent']) + ($parts[1] * $customtimevalueprice);
         $info_product['data_limit_reset'] = "no_reset";
     } else {
         $stmt = $pdo->prepare("SELECT * FROM product WHERE code_product = :code_product AND (Location = :location OR Location = '/all') LIMIT 1");
@@ -5508,7 +5514,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
         if ($codeproduct == "custom_volume") {
             $prodcut['code_product'] = "custom_volume";
             $prodcut['name_product'] = $nameloc['name_product'];
-            $prodcut['price_product'] = ($service_other['volumebuy'] * $custompricevalue) + ($nameloc['Service_time'] * $customtimevalueprice);
+            $prodcut['price_product'] = whale_volume_price($service_other['volumebuy'], $custompricevalue, $user['agent']) + ($nameloc['Service_time'] * $customtimevalueprice);
             $prodcut['Service_time'] = $service_other['Service_time'];
             $prodcut['Volume_constraint'] = $service_other['volumebuy'];
         } else {
@@ -5633,7 +5639,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
         if ($codeproduct == "custom_volume") {
             $prodcut['code_product'] = "custom_volume";
             $prodcut['name_product'] = $nameloc['name_product'];
-            $prodcut['price_product'] = ($service_other['volumebuy'] * $custompricevalue) + ($service_other['Service_time'] * $customtimevalueprice);
+            $prodcut['price_product'] = whale_volume_price($service_other['volumebuy'], $custompricevalue, $user['agent']) + ($service_other['Service_time'] * $customtimevalueprice);
             $prodcut['Service_time'] = $service_other['Service_time'];
             $prodcut['Volume_constraint'] = $service_other['volumebuy'];
         } else {
@@ -5815,6 +5821,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
         sendmessage($from_id, $textbotlang['users']['affiliates']['notReferral'], $keyboard, 'HTML');
         return;
     }
+    if (whale_start_gift_blocked($from_id)) return; // WhaleVPN
     update("reagent_report", "get_gift", true, "user_id", $from_id);
     if ($reagent['get_gift']) {
         sendmessage($from_id, $textbotlang['users']['affiliates']['membershipGiftClaimed'], $keyboard, 'HTML');
@@ -6678,6 +6685,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
     ));
     $dateacc = date('Y/m/d H:i:s');
     $type = "extends_not_user";
+    whale_after_renew($from_id, $prodcut['price_product'], $usernamePanelExtends); // WhaleVPN
     $stmt->execute([
         ':id_user' => $from_id,
         ':username' => $usernamePanelExtends,

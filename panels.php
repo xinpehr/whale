@@ -153,6 +153,7 @@ class ManagePanel
             } else {
                 $inbounds = $Get_Data_Panel['inbounds'];
             }
+            whale_pending_device_limit($code_product); // WhaleVPN
             $data_Output = addClient($Get_Data_Panel, $usernameC, $expire, $subId, $data_limit, $inbounds, $Get_Data_Product['name_product'], $note);
             if (!empty($data_Output['error'])) {
                 return array(
@@ -1571,6 +1572,7 @@ class ManagePanel
             if (!empty($config['subId']))
                 $data['subId'] = $config['subId'];
 
+            $data = whale_modify_payload($data, $username, $Get_Data_Panel); // WhaleVPN
             $modify = updateClient($Get_Data_Panel, $username, $data);
             attach_service($Get_Data_Panel, $username, json_decode($Get_Data_Panel['inbounds']));
             if (!empty($modify['error'])) {
@@ -2051,7 +2053,8 @@ class ManagePanel
         }
         update("invoice", 'uuid', null, "username", $username);
         update("invoice", 'Status', "active", "username", $username);
-        $Method_extend = extendMethodKey($Method_extend);
+        $Method_extend = whale_extend_method_key($Method_extend); // WhaleVPN
+        if ($Method_extend === 'resetTimeConvertVolume' && !whale_extend_reset_time_convert($this, $panel, $username, $data_user, $data_limit_new, $time_new)) return array('status' => false, 'msg' => 'error reset'); // WhaleVPN
         if ($Method_extend == "resetVolumeTime") {
             $reset = $this->ResetUserDataUsage($username, $panel['name_panel']);
             if ($reset['status'] == false) {

@@ -32,3 +32,4 @@ $textbotlang = languagechange();
         }
     }
 }
+whale_panel_health_tick(); // WhaleVPN

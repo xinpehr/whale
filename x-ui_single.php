@@ -50,6 +50,7 @@ function addClient($panel, $usernameac, $Expire, $subId, $Total, $inboundid, $na
         "enable" => true,
         "subId" => $subId
     ];
+    $data = whale_client_add_payload($data); // WhaleVPN
     $config = array(
         "inboundIds" => json_decode($inboundid, true),
         'client' => $data

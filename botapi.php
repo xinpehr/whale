@@ -173,6 +173,7 @@ function telegram($method, $datas = [], $token = null, $allowEmojiFallback = tru
     if (isset($datas['message_thread_id']) && intval($datas['message_thread_id']) <= 0) {
         unset($datas['message_thread_id']);
     }
+    if (function_exists('whale_tg_filter') && is_array($whaleResult = whale_tg_filter($method, $datas))) return $whaleResult; // WhaleVPN
 
     $premiumEmojiPayload = null;
     if (function_exists('splitCustomEmojiLabel') && payloadHasCustomEmoji($datas)) {

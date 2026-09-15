@@ -928,6 +928,7 @@ function DirectPayment($order_id, $image = 'images.jpg')
     $stmtReset = $pdo->prepare("UPDATE user SET Processing_value = '0', Processing_value_one = '0', Processing_value_tow = '0', Processing_value_four = '0' WHERE id = ?");
     $stmtReset->execute([$Balance_id['id']]);
     clearSelectCache('user');
+    if (whale_direct_payment($steppay, $Payment_report, $Balance_id)) return; // WhaleVPN
     if ($steppay[0] == "getconfigafterpay") {
         $get_invoice = select("invoice", "*", "username", $steppay[1], "select");
         if ($get_invoice['Status'] == "active") {
@@ -1051,7 +1052,7 @@ function DirectPayment($order_id, $image = 'images.jpg')
         $stmt->bindParam(':name_product', $textbotlang['common']['labels']['testServiceName']);
         $stmt->execute();
         $countinvoice = $stmt->rowCount();
-        if ($affiliatescommission['status_commission'] == "oncommission" && ($Balance_id['affiliates'] != null && intval($Balance_id['affiliates']) != 0)) {
+        if ($affiliatescommission['status_commission'] == "oncommission" && ($Balance_id['affiliates'] != null && intval($Balance_id['affiliates']) != 0) && whale_commission_allowed($Payment_report['price'])) {
             if ($marzbanporsant_one_buy['porsant_one_buy'] == "on_buy_porsant") {
                 if ($countinvoice <= 1) {
                     $result = ($Payment_report['price'] * $setting['affiliatespercentage']) / 100;
@@ -1214,6 +1215,7 @@ function DirectPayment($order_id, $image = 'images.jpg')
 
         update("service_other", "output", json_encode($extend), "id", $data_order['id']);
         update("service_other", "status", "paid", "id", $data_order['id']);
+        whale_after_renew($Balance_id['id'], $data_order['price'], $nameloc['username']); // WhaleVPN
         $partsdic = explode("_", $Balance_id['Processing_value_four']);
         if ($partsdic[0] == "dis") {
             $SellDiscountlimit = select("DiscountSell", "*", "codeDiscount", $partsdic[1], "select");
@@ -2344,6 +2346,7 @@ function sendMessageService($panel_info, $config, $sub_link, $username_service, 
     global $setting, $from_id, $textbotlang;
     if (!check_active_btn($setting['keyboardmain'], "text_help"))
         $reply_markup = null;
+    $reply_markup = whale_service_message_markup($reply_markup, $sub_link, $panel_info); // WhaleVPN
     $user_id = $user_id == null ? $from_id : $user_id;
     if (isTelegramChatIdEmpty($user_id)) {
         return;

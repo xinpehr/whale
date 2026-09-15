@@ -6449,11 +6449,11 @@ if ($datain == "settimecornremove" && $adminrulecheck['rule'] == "administrator"
     sendmessage($from_id, $textbotlang['Admin']['cronjob']['askVolumeAlert'], $backadmin, 'HTML');
     step("getvolumewarn", $from_id);
 } elseif ($user['step'] == "getvolumewarn") {
-    if (!ctype_digit($text)) {
+    if (!whale_volumewarn_valid($text)) { // WhaleVPN: accepts 500MB / 0.5
         sendmessage($from_id, $textbotlang['Admin']['invalidValue'], null, 'html');
         return;
     }
-    update("setting", "volumewarn", $text);
+    update("setting", "volumewarn", whale_volumewarn_value($text)); // WhaleVPN
     sendmessage($from_id, $textbotlang['Admin']['changesSaved2'], $setting_panel, 'HTML');
     step("home", $from_id);
 } elseif ($text == $textbotlang['keyboard']['manualCreateConfig']) {

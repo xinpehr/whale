@@ -737,7 +737,7 @@ function mini_custom_price(array $data, string $method): void
         $traffic_price = panelAgentValue($panel['pricecustomvolume'], $agentKey);
         $time_price = panelAgentValue($panel['pricecustomtime'], $agentKey);
         if (intval($statuscustomvolume) == 1 && $panel['type'] != "Manualsale") {
-            $price = ($traffic_price * intval($data['traffic_gb'])) + ($time_price * intval($data['time_days']));
+            $price = whale_volume_price(intval($data['traffic_gb']), $traffic_price, $agentKey) + ($time_price * intval($data['time_days']));
         } else {
             $price = false;
         }
@@ -851,7 +851,7 @@ function mini_purchase(array $data, string $method): void
             'Service_time' => (int) $customsrvice['time_days'],
             'Location' => $panel['name_panel'],
             'category' => null,
-            'price_product' => ((int) $customsrvice['traffic_gb'] * $custompricevalue) + ((int) $customsrvice['time_days'] * $customtimevalueprice)
+            'price_product' => whale_volume_price((int) $customsrvice['traffic_gb'], $custompricevalue, $agentKey) + ((int) $customsrvice['time_days'] * $customtimevalueprice)
         );
         if (intval($product['Volume_constraint']) > $maxvolume or intval($product['Volume_constraint']) < $mainvolume) {
             http_response_code(500);
@@ -1044,7 +1044,7 @@ function mini_purchase(array $data, string $method): void
     $stmt->bindParam(':name_product', $textbotlang['common']['labels']['testServiceName']);
     $stmt->execute();
     $countinvoice = (int) $stmt->fetchColumn();
-    if ($affiliatescommission['status_commission'] == "oncommission" && ($user_info['affiliates'] != null && intval($user_info['affiliates']) != 0)) {
+    if ($affiliatescommission['status_commission'] == "oncommission" && ($user_info['affiliates'] != null && intval($user_info['affiliates']) != 0) && whale_commission_allowed($product['price_product'])) {
         if ($marzbanporsant_one_buy['porsant_one_buy'] == "on_buy_porsant") {
             if ($countinvoice == 1) {
                 $result = ($product['price_product'] * $setting['affiliatespercentage']) / 100;
