@@ -156,12 +156,14 @@ function inv_remove_service(array $data, string $method): void
     if ($data['type'] == "one") {
         update("invoice", "Status", "removebyadmin", "id_invoice", $data["id_invoice"]);
         $ManagePanel->RemoveUser($invoice['Service_location'], $invoice['username']);
+        whale_notify_removed($invoice);
     } elseif ($data['type'] == "tow") {
         $refund = requireInt($data, 'amount', 0);
         $stmt = $pdo->prepare("UPDATE user SET Balance =  Balance + :balance WHERE id = :mp2");
         $stmt->execute([':mp2' => $invoice['id_user'], ':balance' => $refund]);
         update("invoice", "Status", "removebyadmin", "id_invoice", $data["id_invoice"]);
         $ManagePanel->RemoveUser($invoice['Service_location'], $invoice['username']);
+        whale_notify_removed($invoice);
     } elseif ($data['type'] == "three") {
         $stmt = $pdo->prepare("DELETE  FROM invoice WHERE id_invoice = :id_invoice");
         $stmt->execute(['id_invoice' => $data['id_invoice']]);

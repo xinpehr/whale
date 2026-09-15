@@ -2969,8 +2969,6 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
             sendmessage($from_id, $textbotlang['users']['invalidusername'], $backuser, 'HTML');
             return;
         }
-    } else {
-        deletemessage($from_id, $message_id);
     }
     if ($marzban_list_get['type'] == "Manualsale") {
         $stmt = $pdo->prepare("SELECT * FROM manualsell WHERE codepanel = :codepanel AND codeproduct = :codeproduct AND status = 'active'");
@@ -2984,6 +2982,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
             return;
         }
     }
+    $whaleWait = whale_wait_start($from_id, $message_id, $user['step'] != "createusertest" && !empty($datain));
     $limit_usertest = $userlimit['limit_usertest'] - 1;
     update("user", "limit_usertest", $limit_usertest, "id", $from_id);
     $randomString = bin2hex(random_bytes(4));
@@ -3018,6 +3017,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
     $dataoutput = $ManagePanel->createUser($marzban_list_get['name_panel'], "usertest", $username_ac, $datac);
     if (!is_array($dataoutput) || empty($dataoutput['username'])) {
         $dataoutput['msg'] = json_encode($dataoutput['msg'] ?? $dataoutput ?? 'unknown error');
+        whale_wait_end($from_id, $whaleWait);
         sendmessage($from_id, $textbotlang['users']['usertest']['errorcreat'], $keyboard, 'html');
         $texterros = sprintf($textbotlang['Admin']['reportgroup']['errorTestAccountCreate'], $dataoutput['msg'], $from_id, $username, $marzban_list_get['name_panel']);
         if (strlen($setting['Channel_Report']) > 0) {
@@ -3064,6 +3064,7 @@ if ($text == "/start" || $datain == "start" || $text == "start") {
         $textcreatuser = str_replace('{password}', $dataoutput['subscription_url'], $textcreatuser);
         update("invoice", "user_info", $dataoutput['subscription_url'], "id_invoice", $randomString);
     }
+    whale_wait_end($from_id, $whaleWait);
     sendMessageService($marzban_list_get, $dataoutput['configs'], $output_config_link, $dataoutput['username'], $usertestinfo, $textcreatuser, $randomString);
     sendmessage($from_id, $textbotlang['users']['selectoption'], $keyboard, 'HTML');
     step('home', $from_id);

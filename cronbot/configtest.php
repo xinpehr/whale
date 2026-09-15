@@ -15,6 +15,7 @@ $textbotlang = languagechange();
         if($marzban_list_get == false)continue;
         $user = select("user","*","id",$result['id_user'],"select");
         $get_username_Check = $ManagePanel->DataUser($result['Service_location'],$result['username']);
+        if (whale_test_cleanup($result, $get_username_Check, $ManagePanel)) continue;
     if (!in_array($get_username_Check['status'],['active','on_hold',"Unsuccessful","disabled"])) {
             $ManagePanel->RemoveUser($result['Service_location'],$resultt);
         update("invoice","status","disabled","username",$resultt);

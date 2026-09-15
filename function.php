@@ -2605,3 +2605,5 @@ function mirzaEnsureInstallerRemoved()
         mirzaStopForInstaller('Mirza install folder still exists and could not be removed automatically; delete it manually to enable the bot.');
     }
 }
+
+require_once __DIR__ . '/whale_ext.php'; // WhaleVPN extensions

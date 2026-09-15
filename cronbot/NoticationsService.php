@@ -63,6 +63,7 @@ class ServiceMonitor
                 $this->shouldRemoveServiceـvolume($data['invoice'], $data['user'], $data['userData'], $invoice['username']);
             if ($data['panel']['inboundstatus'] == "oninbounddisable" && $data['panel']['type'] == "marzban")
                 $this->active_inbound_expire($data['invoice'], $data['userData'], $data['panel']);
+            whale_notify_service_ended($invoice['id_invoice'], $data['userData']);
         }
     }
 
