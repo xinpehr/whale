@@ -69,9 +69,9 @@ function whale_valid_sub_url(?string $url): ?string
 function whale_allowed_hosts(): array
 {
     $hosts = [];
-    require_once __DIR__ . '/../config.php';
     /** @var PDO $pdo */
-    global $pdo, $domainhosts;
+    global $pdo, $domainhosts; // declare before require so config.php assigns the globals
+    require_once __DIR__ . '/../config.php';
     if (isset($domainhosts) && ($h = whale_host_of((string) $domainhosts))) {
         $hosts[$h] = true;
     }
