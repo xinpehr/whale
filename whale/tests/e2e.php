@@ -487,7 +487,9 @@ whale_q("UPDATE user SET step = 'home' WHERE id = ?", [U1]);
 
 section('commission minimum on purchase');
 update('setting', 'affiliatespercentage', '10');
-whale_q("UPDATE affiliates SET porsant_one_buy = 'off_buy_porsant'");
+// the mini app pays purchase commission only inside the "on_buy_porsant" branch (upstream behaviour);
+// the user already has several invoices, so its "not first purchase" branch pays on every purchase
+whale_q("UPDATE affiliates SET porsant_one_buy = 'on_buy_porsant'");
 whale_set('commission_min_amount', 0);
 set_balance(U2, 0);
 set_balance(U1, 100000);
