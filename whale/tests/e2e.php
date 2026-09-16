@@ -258,6 +258,8 @@ function cleanup()
     whale_q("DELETE FROM whale_product WHERE code_product = ?", [PROD]);
     whale_q("DELETE FROM whale_promo WHERE title LIKE 'E2E%'");
     whale_q("DELETE FROM whale_invoice WHERE id_invoice NOT IN (SELECT id_invoice FROM invoice)");
+    whale_q("DELETE FROM whale_device_seen WHERE username NOT IN (SELECT username FROM invoice)");
+    whale_q("DELETE FROM whale_lock WHERE k LIKE 'e2e:%' OR k LIKE 'act:9000000001%'");
     whale_q("DELETE FROM whale_setting");
     foreach ($SNAP['whale_setting'] as $row) {
         whale_q("INSERT INTO whale_setting (k, v) VALUES (?, ?)", [$row['k'], $row['v']]);
@@ -614,6 +616,91 @@ try {
 }
 $real = whale_panel_probe($PANEL);
 ok('real probe of live panel succeeds', $real['ok'], json_encode($real));
+
+section('duplicate action and cron locks');
+putenv('WHALE_TEST=0'); // both guards stand aside in test mode, so exercise them for real
+try {
+    whale_action_release('e2e:guard');
+    ok('first tap of an action is allowed', whale_action_guard('e2e:guard', 5));
+    ok('second tap within the window is blocked', !whale_action_guard('e2e:guard', 5));
+    whale_action_release('e2e:guard');
+    ok('action is free again once released', whale_action_guard('e2e:guard', 5));
+    ok('first cron run takes the lock', whale_cron_guard('e2e_lock'));
+    ok('second cron run steps aside', !whale_cron_guard('e2e_lock'));
+} finally {
+    putenv('WHALE_TEST=1');
+    whale_action_release('e2e:guard');
+    @unlink(ROOT . '/storage/cache/whale-cron-e2e_lock.lock');
+}
+
+section('device kicked notification');
+$inv = whale_q("SELECT * FROM invoice WHERE id_invoice = ?", [$PID])->fetch(PDO::FETCH_ASSOC);
+if ($inv) {
+    whale_set('device_notify', 1);
+    $cardUser = trim($inv['username']);
+    // sized to the limit the tick itself will read, so the "at the limit" condition holds
+    $limit = max(1, whale_device_limit_of($PANEL, $cardUser));
+    $before = [];
+    for ($i = 1; $i <= $limit; $i++) {
+        $before[] = '10.0.0.' . $i;
+    }
+    $after = $before;
+    array_shift($after);
+    $after[] = '10.9.9.9';
+    sort($after);
+    whale_q("INSERT INTO whale_device_seen (username, ips, checked) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE ips = VALUES(ips), checked = VALUES(checked)", [$cardUser, json_encode($before), time() - 120]);
+    $GLOBALS['whale_device_ips_override'] = fn($p, $u) => trim($u) === $cardUser ? $after : null;
+    try {
+        $off = cap_offset();
+        whale_device_watch_tick(200);
+        $calls = cap_since($off);
+        ok('user told the older device was disconnected', (bool) cap_find($calls, 'دستگاه جدیدی', $inv['id_user']));
+        ok('notice offers the devices button', (bool) cap_find($calls, 'whale_dev_' . $PID, $inv['id_user']));
+        $stored = json_decode((string) whale_q("SELECT ips FROM whale_device_seen WHERE username = ?", [$cardUser])->fetchColumn(), true);
+        ok('last seen IPs stored for the next run', $stored === $after, json_encode($stored));
+        // a device joining without pushing anyone off must stay silent
+        whale_q("UPDATE whale_device_seen SET ips = ? WHERE username = ?", [json_encode(array_slice($after, 0, max(1, count($after) - 1))), $cardUser]);
+        $off = cap_offset();
+        whale_device_watch_tick(200);
+        ok('a new device alone is not reported', !cap_find(cap_since($off), 'دستگاه جدیدی', $inv['id_user']));
+        // and nothing at all happens while the feature is off
+        whale_set('device_notify', 0);
+        whale_q("UPDATE whale_device_seen SET ips = ? WHERE username = ?", [json_encode($before), $cardUser]);
+        $off = cap_offset();
+        whale_device_watch_tick(200);
+        ok('switch off stops the notices', !cap_find(cap_since($off), 'دستگاه جدیدی', $inv['id_user']));
+        whale_set('device_notify', 1);
+    } finally {
+        unset($GLOBALS['whale_device_ips_override']);
+    }
+}
+
+section('service status card');
+whale_set('card_enabled', 1);
+ok('GD and the Persian font are available', whale_card_available());
+$png = whale_card_render([
+    'username' => 'e2e-card', 'product' => 'WhaleVPN e2e', 'status' => 'active',
+    'used' => 3.5 * (1024 ** 3), 'total' => 10 * (1024 ** 3),
+    'expire' => time() + 12 * 86400, 'devices' => 2, 'user_id' => U1,
+]);
+ok('card renders a PNG', is_string($png) && strncmp($png, "\x89PNG", 4) === 0 && strlen($png) > 3000, is_string($png) ? strlen($png) . ' bytes' : 'null');
+$unlimited = whale_card_render(['username' => 'e2e-card', 'status' => 'active', 'used' => 0, 'total' => 0, 'expire' => null, 'devices' => 0, 'user_id' => U1]);
+ok('card renders for an unlimited service', is_string($unlimited) && strncmp($unlimited, "\x89PNG", 4) === 0);
+$calls = cb(U1, 'product_' . $PID);
+ok('service screen offers the status card', (bool) cap_find($calls, 'whale_card_' . $PID));
+$calls = cb(U1, 'whale_card_' . $PID);
+$photo = null;
+foreach ($calls as $c) {
+    if (($c['method'] ?? '') === 'sendphoto') {
+        $photo = $c;
+        break;
+    }
+}
+ok('card sent as a photo with a caption', $photo && strpos(json_encode($photo['data'] ?? [], JSON_UNESCAPED_UNICODE), 'کارت وضعیت') !== false, mb_substr(json_encode(end($calls)['data'] ?? [], JSON_UNESCAPED_UNICODE), 0, 300));
+whale_set('card_enabled', 0);
+$calls = cb(U1, 'product_' . $PID);
+ok('card button hidden when switched off', !cap_find($calls, 'whale_card_' . $PID));
+whale_set('card_enabled', 1);
 
 /* ---------- summary ---------- */
 $pass = count(array_filter($RESULTS, fn($r) => $r[1]));

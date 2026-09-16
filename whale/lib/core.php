@@ -3,7 +3,7 @@
  * WhaleVPN core: schema, settings, Telegram output filter, small helpers.
  */
 
-const WHALE_SCHEMA = 3;
+const WHALE_SCHEMA = 4;
 
 function whale_pdo()
 {
@@ -25,6 +25,9 @@ function whale_defaults()
         'device_limit_default' => 0,     // purchases without a product row (custom volume); 0 = unlimited
         'device_limit_test' => 0,        // test accounts; 0 = unlimited
         'device_price' => 0,             // price of one extra device (Toman); 0 = not sold
+        'device_notify' => 1,            // tell the user when an extra device pushed an older one off
+        // status card (PNG drawn by whale/lib/card.php)
+        'card_enabled' => 1,             // show the "status card" button on the service screen
         // renewal
         'renew_max_days_left' => 0,      // renewal allowed only when days left <= N (0 = no rule)
         'renew_max_percent_left' => 0,   // or remaining volume percent <= N (0 = no rule)
@@ -52,7 +55,8 @@ function whale_setting_keys_numeric()
 {
     return [
         'test_unused_hours', 'test_nudge_hours', 'nudge_days', 'rating_days', 'rating_require_online',
-        'device_limit_default', 'device_limit_test', 'device_price', 'renew_max_days_left', 'renew_max_percent_left',
+        'device_limit_default', 'device_limit_test', 'device_price', 'device_notify', 'card_enabled',
+        'renew_max_days_left', 'renew_max_percent_left',
         'renew_commission_percent', 'commission_min_amount', 'start_gift_after_purchase', 'ref_alert_per_hour',
         'oneclick', 'button_styles', 'hide_location', 'light_skin', 'panel_health', 'panel_fail_threshold',
     ];
@@ -88,6 +92,8 @@ function whale_install()
         "CREATE TABLE IF NOT EXISTS whale_user_gateway (user_id VARCHAR(200) NOT NULL, gateway VARCHAR(60) NOT NULL, PRIMARY KEY (user_id, gateway)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
         "CREATE TABLE IF NOT EXISTS whale_balance_log (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, user_id VARCHAR(200) NOT NULL, old_balance BIGINT NULL, new_balance BIGINT NULL, delta BIGINT NULL, reason VARCHAR(255) NULL, created INT NOT NULL, KEY k_user (user_id, id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
         "CREATE TABLE IF NOT EXISTS whale_panel_health (code_panel VARCHAR(200) NOT NULL PRIMARY KEY, fails INT NOT NULL DEFAULT 0, auto_disabled TINYINT NOT NULL DEFAULT 0, down_since INT NULL, last_error TEXT NULL, last_ok INT NULL, last_check INT NULL, latency_ms INT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+        "CREATE TABLE IF NOT EXISTS whale_lock (k VARCHAR(190) NOT NULL PRIMARY KEY, expires INT NOT NULL, KEY k_expires (expires)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+        "CREATE TABLE IF NOT EXISTS whale_device_seen (username VARCHAR(200) NOT NULL PRIMARY KEY, ips TEXT NULL, checked INT NOT NULL DEFAULT 0, KEY k_checked (checked)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
         "DROP TRIGGER IF EXISTS whale_user_balance_au",
         "CREATE TRIGGER whale_user_balance_au AFTER UPDATE ON user FOR EACH ROW BEGIN IF NOT (OLD.Balance <=> NEW.Balance) THEN INSERT INTO whale_balance_log (user_id, old_balance, new_balance, delta, reason, created) VALUES (NEW.id, OLD.Balance, NEW.Balance, NEW.Balance - OLD.Balance, @whale_reason, UNIX_TIMESTAMP()); END IF; END",
     ];

@@ -42,6 +42,11 @@ function whale_handle_update()
         $step = is_array($user) ? (string) ($user['step'] ?? '') : '';
         $data = (string) $datain;
 
+        // a second tap on "buy" or "test account" arrives as a different update: guard the action itself
+        if (whale_duplicate_action($from_id, $data, $text)) {
+            return true;
+        }
+
         if (whale_is_admin($from_id) && ($text === '/whale' || strpos($data, 'whale_admin') === 0 || strpos($step, 'whale_admin') === 0)) {
             return whale_admin_handle();
         }
@@ -54,6 +59,10 @@ function whale_handle_update()
         }
         if (preg_match('/^whale_rate_([a-f0-9]+)_([1-5])$/', $data, $m)) {
             whale_rating_handle_callback($from_id, $message_id, $m[1], $m[2]);
+            return true;
+        }
+        if (preg_match('/^whale_card_(\w+)$/', $data, $m)) {
+            whale_card_callback($from_id, $m[1]);
             return true;
         }
         if (preg_match('/^whale_dev_(\w+)$/', $data, $m)) {

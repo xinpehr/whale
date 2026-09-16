@@ -53,6 +53,9 @@ function whale_service_keyboard($keyboardJson, $nameloc, $DataUserOut)
             $extra[] = $one;
         }
     }
+    if (whale_int('card_enabled') === 1 && whale_card_available() && in_array($status, ['active', 'on_hold', 'disabled', 'expired', 'limited'], true)) {
+        $extra[] = [['text' => whale_t('btn_card', [], $uid), 'callback_data' => 'whale_card_' . $nameloc['id_invoice']]];
+    }
     $panel = whale_panel_by_name($nameloc['Service_location'] ?? '');
     if (is_array($panel) && ($panel['type'] ?? '') === 'x-ui_single' && in_array($status, ['active', 'on_hold', 'disabled'], true)) {
         $limit = whale_device_limit_of($panel, $nameloc['username']);
@@ -218,17 +221,41 @@ function whale_device_set_limit($panel, $username, $limit)
     return is_array($check) && intval($check['limitIp'] ?? -1) === intval($limit);
 }
 
-function whale_device_online($panel, $username)
+/*
+ * IPs 3x-ui currently has on record for this client, sorted. Null when the panel call fails,
+ * which is not the same as "no device connected". 3.8 answers with objects (ip/time/node);
+ * older builds answered with a plain string.
+ */
+function whale_device_ips($panel, $username)
 {
+    if (isset($GLOBALS['whale_device_ips_override'])) {
+        return $GLOBALS['whale_device_ips_override']($panel, $username);
+    }
     $res = whale_xui_post($panel, '/panel/api/clients/ips/' . rawurlencode($username));
     if (!$res['ok']) {
-        return 0;
+        return null;
     }
     $obj = $res['body']['obj'] ?? [];
     if (is_string($obj)) {
-        $obj = array_filter(preg_split('/[\s,]+/', $obj));
+        $obj = preg_split('/[\s,]+/', $obj);
     }
-    return is_array($obj) ? count($obj) : 0;
+    $ips = [];
+    foreach ((array) $obj as $entry) {
+        $ip = is_array($entry) ? (string) ($entry['ip'] ?? '') : (string) $entry;
+        $ip = trim(preg_replace('/\s*\(.*\)$/', '', $ip));
+        if ($ip !== '') {
+            $ips[$ip] = true;
+        }
+    }
+    $ips = array_keys($ips);
+    sort($ips);
+    return $ips;
+}
+
+function whale_device_online($panel, $username)
+{
+    $ips = whale_device_ips($panel, $username);
+    return is_array($ips) ? count($ips) : 0;
 }
 
 /* ---------- refund estimate (mirrors admin.php cancel approval) ---------- */

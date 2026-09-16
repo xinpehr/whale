@@ -14,6 +14,8 @@ function whale_setting_labels()
         'device_limit_default' => 'سقف دستگاه پیش‌فرض خرید (۰=نامحدود)',
         'device_limit_test' => 'سقف دستگاه اکانت تست (۰=نامحدود)',
         'device_price' => 'قیمت هر دستگاه اضافه (تومان، ۰=خاموش)',
+        'device_notify' => 'اطلاع‌رسانی قطع دستگاه قبلی به کاربر (۱/۰)',
+        'card_enabled' => 'دکمه کارت وضعیت سرویس (۱/۰)',
         'renew_max_days_left' => 'تمدید فقط وقتی روز باقی ≤ (۰=بدون قاعده)',
         'renew_max_percent_left' => 'یا درصد حجم باقی ≤ (۰=بدون قاعده)',
         'renew_commission_percent' => 'درصد پورسانت تمدید (-۱=مثل خرید)',

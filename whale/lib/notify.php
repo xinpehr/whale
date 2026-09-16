@@ -175,6 +175,68 @@ function whale_nudge_unconnected($invoice, $panel_data)
     return true;
 }
 
+/* ---------- device watch: tell the user when an extra device was pushed off ---------- */
+
+/*
+ * 3x-ui enforces limitIp through fail2ban: the extra IP is banned for 30 minutes and the
+ * user sees a dead connection with no explanation. Here we compare the IP list of each
+ * service between two runs; when one IP disappeared, another appeared, and the service is
+ * at its limit, the older device was almost certainly the one that got dropped.
+ *
+ * Called from cronbot/configtest.php (every 2 minutes).
+ */
+function whale_device_watch_tick($rows = 20)
+{
+    if (whale_int('device_notify') !== 1) {
+        return 0;
+    }
+    $sent = 0;
+    $invoices = whale_q("SELECT id_invoice, id_user, username, Service_location, bottype FROM invoice WHERE Status = 'active' ORDER BY RAND() LIMIT " . max(1, intval($rows)))->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($invoices as $invoice) {
+        try {
+            $panel = whale_panel_by_name($invoice['Service_location']);
+            if (!is_array($panel) || ($panel['type'] ?? '') !== 'x-ui_single') {
+                continue;
+            }
+            $username = trim($invoice['username']);
+            $limit = whale_device_limit_of($panel, $username);
+            if ($limit <= 0) {
+                continue; // no device limit: nothing can be kicked
+            }
+            $ips = whale_device_ips($panel, $username);
+            if ($ips === null) {
+                continue; // panel call failed: keep the previous list untouched
+            }
+            $previous = whale_q("SELECT ips FROM whale_device_seen WHERE username = ?", [$username])->fetchColumn();
+            $previous = $previous === false ? null : json_decode((string) $previous, true);
+            whale_q(
+                "INSERT INTO whale_device_seen (username, ips, checked) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE ips = VALUES(ips), checked = VALUES(checked)",
+                [$username, json_encode($ips), time()]
+            );
+            if (!is_array($previous) || !$previous || !$ips) {
+                continue;
+            }
+            $dropped = array_values(array_diff($previous, $ips));
+            $added = array_values(array_diff($ips, $previous));
+            // a plain IP change (wifi to mobile data) also drops one and adds one, so only
+            // report it when the service is actually sitting at its device limit
+            if (!$dropped || !$added || count($ips) < $limit) {
+                continue;
+            }
+            whale_send_user(
+                $invoice['id_user'],
+                whale_t('device_kicked', ['username' => $username, 'limit' => $limit], $invoice['id_user']),
+                whale_kb([[['text' => whale_t('btn_devices', ['limit' => $limit], $invoice['id_user']), 'callback_data' => 'whale_dev_' . $invoice['id_invoice']]]]),
+                $invoice['bottype'] ?? null
+            );
+            $sent++;
+        } catch (Throwable $e) {
+            error_log('whale_device_watch_tick: ' . $e->getMessage());
+        }
+    }
+    return $sent;
+}
+
 /* ---------- ratings ---------- */
 
 function whale_rating_maybe_ask($invoice, $panel_data)
