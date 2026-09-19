@@ -142,6 +142,11 @@ function tg(array $update)
 {
     global $UPDATE_ID, $SECRET;
     $update['update_id'] = ++$UPDATE_ID;
+    // Mirza blocks a user after 35 messages in a minute; the suite is faster than that
+    $uid = $update['message']['from']['id'] ?? $update['callback_query']['from']['id'] ?? null;
+    if ($uid) {
+        whale_q("UPDATE user SET message_count = 0 WHERE id = ?", [(string) $uid]);
+    }
     $off = cap_offset();
     $r = cgi('index.php', 'POST', 'secret=' . $SECRET, json_encode($update, JSON_UNESCAPED_UNICODE));
     clearSelectCache();
