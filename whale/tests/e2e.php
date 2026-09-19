@@ -307,8 +307,14 @@ section('button colors and location text');
 $off = cap_offset();
 telegram('sendmessage', ['chat_id' => U1, 'text' => "📍 موقعیت سرویس : " . $PANEL['name_panel'], 'reply_markup' => json_encode(['inline_keyboard' => [[['text' => 'buy', 'callback_data' => 'confirmandgetservice'], ['text' => 'del', 'callback_data' => 'removeauto-abc']]]])]);
 $c = cap_since($off)[0] ?? null;
-ok('confirm button is green', kb_has($c, '"style":"success"'));
-ok('delete button is red', kb_has($c, '"style":"danger"'));
+ok('no button colours while button_styles is off', !kb_has($c, '"style":'), $c['data']['reply_markup'] ?? '');
+whale_set('button_styles', 1);
+$off = cap_offset();
+telegram('sendmessage', ['chat_id' => U1, 'text' => 'x', 'reply_markup' => json_encode(['inline_keyboard' => [[['text' => 'buy', 'callback_data' => 'confirmandgetservice'], ['text' => 'del', 'callback_data' => 'removeauto-abc']]]])]);
+$c = cap_since($off)[0] ?? null;
+ok('confirm button is green when switched on', kb_has($c, '"style":"success"'));
+ok('delete button is red when switched on', kb_has($c, '"style":"danger"'));
+whale_set('button_styles', 0);
 ok('panel name replaced by sub wording', $c && strpos($c['data']['text'], 'همه‌ی لوکیشن‌ها') !== false, $c['data']['text'] ?? '');
 
 section('users');
@@ -738,7 +744,7 @@ try {
     $start = cap_find($calls, 'خوش آمدید', U1);
     $rk = json_decode((string) ($start['data']['reply_markup'] ?? ''), true);
     $rows = $rk['keyboard'] ?? [];
-    ok('menu: wide buy button on top with success colour', isset($rows[0][0]) && count($rows[0]) === 1 && strpos($rows[0][0]['text'], 'خرید سرویس') !== false && ($rows[0][0]['style'] ?? '') === 'success', json_encode($rows[0] ?? null, JSON_UNESCAPED_UNICODE));
+    ok('menu: wide buy button on top, no colour', isset($rows[0][0]) && count($rows[0]) === 1 && strpos($rows[0][0]['text'], 'خرید سرویس') !== false && !isset($rows[0][0]['style']), json_encode($rows[0] ?? null, JSON_UNESCAPED_UNICODE));
     ok('menu: second row is the 3-column grid', isset($rows[1]) && count($rows[1]) === 3, json_encode($rows[1] ?? null, JSON_UNESCAPED_UNICODE));
     ok('menu: wheel of luck gone', strpos(json_encode($rows, JSON_UNESCAPED_UNICODE), 'گردونه') === false);
 } finally {

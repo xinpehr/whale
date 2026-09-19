@@ -44,7 +44,7 @@ function whale_defaults()
         'gateway_rules' => '{}',
         // UX
         'oneclick' => 1,
-        'button_styles' => 1,
+        'button_styles' => 0,            // owner decision 2026-09-19: no coloured buttons anywhere
         'hide_location' => 1,
         'light_skin' => 1,               // every skin-tone emoji the bot sends uses the light tone
         // panel health
@@ -536,13 +536,13 @@ function whale_skin_tone_datas($method, array &$datas)
 /* ---------- main menu layout ---------- */
 
 // Reply keyboard of the main menu: one wide primary action, then a 3-column grid.
-// Placeholders are the ones keyboard.php maps to labels; styles are Bot API button styles.
+// Placeholders are the ones keyboard.php maps to labels. No colours: the owner wants a plain menu.
 function whale_main_layout()
 {
     return [
         'keyboard' => [
-            [['text' => 'text_sell', 'style' => 'success']],
-            [['text' => 'text_usertest', 'style' => 'primary'], ['text' => 'text_Purchased_services'], ['text' => 'text_extend', 'style' => 'primary']],
+            [['text' => 'text_sell']],
+            [['text' => 'text_usertest'], ['text' => 'text_Purchased_services'], ['text' => 'text_extend']],
             [['text' => 'accountwallet'], ['text' => 'text_affiliates'], ['text' => 'text_Tariff_list']],
             [['text' => 'text_help'], ['text' => 'text_support']],
         ],
