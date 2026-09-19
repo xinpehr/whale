@@ -28,6 +28,8 @@ function whale_defaults()
         'device_notify' => 1,            // tell the user when an extra device pushed an older one off
         // status card (PNG drawn by whale/lib/card.php)
         'card_enabled' => 1,             // show the "status card" button on the service screen
+        // extra volume packs sold on the service screen: lines "gb:price" (empty = Mirza's per-GB flow)
+        'volume_packs' => "10:128000\n25:298000",
         // renewal
         'renew_max_days_left' => 0,      // renewal allowed only when days left <= N (0 = no rule)
         'renew_max_percent_left' => 0,   // or remaining volume percent <= N (0 = no rule)
@@ -273,9 +275,9 @@ function whale_capture($method, $datas)
 function whale_style_rules()
 {
     return [
-        'success' => '/^(confirmandgetservice|confirmandgetserviceDiscount|confirmserivce|confirmserdiscount|confirmaextra|confirmaextratime|Add_Balance|buy$|extend_|exntedagei|serviceextendselect_|Confirm_pay_|get_gift_start|usertestbtn|cart_to_offline|aqayepardakht|zarinpal|plisio|nowpayment|iranpay\d|digitaltron|startelegrams|whale_devok_|whale_devbuy_|whale_topup_|whale_renewpay_|payment$)/',
+        'success' => '/^(confirmandgetservice|confirmandgetserviceDiscount|confirmserivce|confirmserdiscount|confirmaextra|confirmaextratime|Add_Balance|buy$|extend_|exntedagei|serviceextendselect_|Confirm_pay_|get_gift_start|usertestbtn|cart_to_offline|aqayepardakht|zarinpal|plisio|nowpayment|iranpay\d|digitaltron|startelegrams|whale_devok_|whale_devbuy_|whale_volok_|whale_topup_|whale_renewpay_|payment$)/',
         'danger' => '/^(removeauto-|removeserviceuser_|confirmremoveservices-|rejectremoceserviceadmin-|remoceserviceadmin|reject_pay_|colselist)/',
-        'primary' => '/^(product_|subscriptionurl_|config_|updateproduct_|whale_dev_|whale_wallet_log|helpbtn)/',
+        'primary' => '/^(product_|subscriptionurl_|config_|updateproduct_|whale_dev_|whale_vol_|whale_card_|whale_wallet_log|helpbtn)/',
     ];
 }
 
@@ -529,4 +531,29 @@ function whale_skin_tone_datas($method, array &$datas)
     if (isset($datas['reply_markup'])) {
         $datas['reply_markup'] = whale_skin_tone_markup($datas['reply_markup']);
     }
+}
+
+/* ---------- main menu layout ---------- */
+
+// Reply keyboard of the main menu: one wide primary action, then a 3-column grid.
+// Placeholders are the ones keyboard.php maps to labels; styles are Bot API button styles.
+function whale_main_layout()
+{
+    return [
+        'keyboard' => [
+            [['text' => 'text_sell', 'style' => 'success']],
+            [['text' => 'text_usertest', 'style' => 'primary'], ['text' => 'text_Purchased_services'], ['text' => 'text_extend', 'style' => 'primary']],
+            [['text' => 'accountwallet'], ['text' => 'text_affiliates'], ['text' => 'text_Tariff_list']],
+            [['text' => 'text_help'], ['text' => 'text_support']],
+        ],
+    ];
+}
+
+function whale_apply_main_layout()
+{
+    update("setting", "keyboardmain", json_encode(whale_main_layout(), JSON_UNESCAPED_UNICODE), null, null);
+    if (function_exists('clearSelectCache')) {
+        clearSelectCache('setting');
+    }
+    return true;
 }

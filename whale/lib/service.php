@@ -36,9 +36,15 @@ function whale_service_keyboard($keyboardJson, $nameloc, $DataUserOut)
         return $keyboardJson;
     }
     $rows = [];
+    $packs = whale_volume_packs();
     foreach ($kb['inline_keyboard'] as $row) {
-        $row = array_values(array_filter($row, function ($b) {
-            return !(isset($b['callback_data']) && strpos((string) $b['callback_data'], 'changeloc_') === 0);
+        $row = array_values(array_filter($row, function ($b) use ($packs) {
+            $cb = isset($b['callback_data']) ? (string) $b['callback_data'] : '';
+            if (strpos($cb, 'changeloc_') === 0) {
+                return false;
+            }
+            // Mirza's per-GB extra volume goes away when WhaleVPN sells fixed packs instead
+            return !($packs && strpos($cb, 'Extra_volume_') === 0);
         }));
         if ($row) {
             $rows[] = $row;
@@ -62,6 +68,9 @@ function whale_service_keyboard($keyboardJson, $nameloc, $DataUserOut)
         $devRow = [['text' => $limit > 0 ? whale_t('btn_devices', ['limit' => $limit], $uid) : whale_t('btn_devices_unlimited', [], $uid), 'callback_data' => 'whale_dev_' . $nameloc['id_invoice']]];
         if ($limit > 0 && whale_int('device_price') > 0) {
             $devRow[] = ['text' => whale_t('btn_device_buy', [], $uid), 'callback_data' => 'whale_devbuy_' . $nameloc['id_invoice']];
+        }
+        if ($packs) {
+            $devRow[] = ['text' => whale_t('btn_volume', [], $uid), 'callback_data' => 'whale_vol_' . $nameloc['id_invoice']];
         }
         $extra[] = $devRow;
     }

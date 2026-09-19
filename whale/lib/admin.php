@@ -39,7 +39,8 @@ function whale_admin_menu_kb()
         [['text' => '💳 قوانین درگاه', 'callback_data' => 'whale_admin_gateways'], ['text' => '🎯 لینک تبلیغاتی', 'callback_data' => 'whale_admin_promos']],
         [['text' => '⭐️ امتیازها', 'callback_data' => 'whale_admin_ratings'], ['text' => '👥 زیرمجموعه‌ها', 'callback_data' => 'whale_admin_refs']],
         [['text' => '🩺 وضعیت پنل', 'callback_data' => 'whale_admin_health'], ['text' => '📜 کیف پول کاربر', 'callback_data' => 'whale_admin_wallet']],
-        [['text' => '📲 تنظیم مینی‌اپ', 'callback_data' => 'whale_admin_miniapp']],
+        [['text' => '📲 تنظیم مینی‌اپ', 'callback_data' => 'whale_admin_miniapp'], ['text' => '➕ بسته‌های حجم اضافه', 'callback_data' => 'whale_admin_volpacks']],
+        [['text' => '🧭 چیدمان منوی اصلی WhaleVPN', 'callback_data' => 'whale_admin_layout']],
     ]);
 }
 
@@ -117,6 +118,17 @@ function whale_admin_handle()
     if (preg_match('/^whale_admin_prod_(.+)$/', $data, $m)) {
         step('whale_admin_in_prod_' . $m[1], $from_id);
         sendmessage($from_id, "📱 سقف دستگاه همزمان برای محصول <code>" . htmlspecialchars($m[1]) . "</code> را بفرستید.\n۰ = نامحدود، <code>default</code> = استفاده از پیش‌فرض.", null, 'HTML');
+        return true;
+    }
+    if ($data === 'whale_admin_volpacks') {
+        step('whale_admin_in_volpacks', $from_id);
+        $cur = trim((string) whale_get('volume_packs'));
+        sendmessage($from_id, "➕ <b>بسته‌های حجم اضافه</b>\n\nهر خط یک بسته: <code>گیگ:قیمت</code>\nمثال:\n<code>10:128000\n25:298000</code>\n\nفعلی:\n<code>" . ($cur !== '' ? htmlspecialchars($cur) : 'خاموش (حجم اضافه‌ی گیگی میرزا)') . "</code>\n\nمتن جدید را بفرستید، <code>off</code> برای خاموش، /cancel برای لغو.", null, 'HTML');
+        return true;
+    }
+    if ($data === 'whale_admin_layout') {
+        whale_apply_main_layout();
+        sendmessage($from_id, "🧭 چیدمان منوی اصلی WhaleVPN اعمال شد.\nکاربران با /start منوی جدید را می‌بینند.", whale_admin_menu_kb(), 'HTML');
         return true;
     }
     if ($data === 'whale_admin_tiers') {
@@ -263,6 +275,21 @@ function whale_admin_input($action, $text)
             return true;
         }
         sendmessage($from_id, "✅ ذخیره شد.", whale_kb([[['text' => '📱 دستگاه محصولات', 'callback_data' => 'whale_admin_products']]]), 'HTML');
+        return true;
+    }
+    if ($action === 'volpacks') {
+        whale_set('volume_packs', strtolower($t) === 'off' ? '' : $t);
+        $packs = whale_volume_packs();
+        if (strtolower($t) !== 'off' && !$packs) {
+            whale_set('volume_packs', '');
+            sendmessage($from_id, '❌ هیچ خط معتبری پیدا نشد. قالب: <code>10:128000</code>', whale_admin_menu_kb(), 'HTML');
+            return true;
+        }
+        $lines = [];
+        foreach ($packs as $gb => $price) {
+            $lines[] = "{$gb} گیگ — " . whale_money($price) . " تومان";
+        }
+        sendmessage($from_id, "✅ بسته‌های حجم اضافه ذخیره شد.\n" . ($lines ? implode("\n", $lines) : 'خاموش'), whale_admin_menu_kb(), 'HTML');
         return true;
     }
     if ($action === 'tiers') {

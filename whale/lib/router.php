@@ -61,6 +61,14 @@ function whale_handle_update()
             whale_rating_handle_callback($from_id, $message_id, $m[1], $m[2]);
             return true;
         }
+        if (preg_match('/^whale_vol_(\w+)$/', $data, $m)) {
+            whale_volume_show($from_id, $message_id, $m[1]);
+            return true;
+        }
+        if (preg_match('/^whale_volok_(\w+)_(\d+)$/', $data, $m)) {
+            whale_volume_confirm($from_id, $message_id, $m[1], $m[2]);
+            return true;
+        }
         if (preg_match('/^whale_card_(\w+)$/', $data, $m)) {
             whale_card_callback($from_id, $m[1]);
             return true;

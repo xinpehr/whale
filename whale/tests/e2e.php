@@ -723,6 +723,52 @@ foreach (['orca1' => [50, 30, 2], 'beluga3' => [60, 90, 1]] as $code => [$gb, $d
     ok("plan $code: wallet charged the plan price", intval(user_row(U3)['Balance']) === 1000, user_row(U3)['Balance']);
 }
 
+section('WhaleVPN wording, main menu layout, extra volume packs');
+$calls = msg(U1, '/start');
+ok('start text is the WhaleVPN welcome', (bool) cap_find($calls, 'به WhaleVPN خوش آمدید', U1));
+$kbBefore = select('setting', '*')['keyboardmain'];
+whale_apply_main_layout();
+try {
+    $calls = msg(U1, '/start');
+    $start = cap_find($calls, 'خوش آمدید', U1);
+    $rk = json_decode((string) ($start['data']['reply_markup'] ?? ''), true);
+    $rows = $rk['keyboard'] ?? [];
+    ok('menu: wide buy button on top with success colour', isset($rows[0][0]) && count($rows[0]) === 1 && strpos($rows[0][0]['text'], 'خرید سرویس') !== false && ($rows[0][0]['style'] ?? '') === 'success', json_encode($rows[0] ?? null, JSON_UNESCAPED_UNICODE));
+    ok('menu: second row is the 3-column grid', isset($rows[1]) && count($rows[1]) === 3, json_encode($rows[1] ?? null, JSON_UNESCAPED_UNICODE));
+    ok('menu: wheel of luck gone', strpos(json_encode($rows, JSON_UNESCAPED_UNICODE), 'گردونه') === false);
+} finally {
+    update('setting', 'keyboardmain', $kbBefore, null, null);
+    clearSelectCache('setting');
+}
+$kbp = KeyboardProduct($PANEL['name_panel'], "SELECT * FROM product WHERE code_product = :c", 0, 'prodcutservice_', false, 'backuser', null, 'customsellvolume', [':c' => 'orca1']);
+ok('price label has a space before toman', strpos($kbp, '448,000 تومان') !== false, mb_substr($kbp, 0, 200));
+ok('three-month label has a space after the emoji', strpos($textbotlang['common']['duration'][3], '🗓 سه') === 0, $textbotlang['common']['duration'][3]);
+
+whale_set('volume_packs', "10:128000\n25:298000");
+$GLOBALS['whale_setting_cache'] = null;
+$inv = whale_q("SELECT * FROM invoice WHERE id_invoice = ?", [$PID])->fetch(PDO::FETCH_ASSOC);
+if ($inv) {
+    set_balance(U1, 200000);
+    $calls = cb(U1, 'product_' . $PID);
+    $screen = cap_find($calls, 'whale_vol_' . $PID, U1);
+    ok('service screen offers volume packs', (bool) $screen);
+    ok("Mirza's per-GB extra volume button is gone", $screen && !kb_has($screen, 'Extra_volume_'));
+    $calls = cb(U1, 'whale_vol_' . $PID);
+    ok('pack list shows both packs', cap_find($calls, 'whale_volok_' . $PID . '_10', U1) && cap_find($calls, 'whale_volok_' . $PID . '_25', U1));
+    $before = intval(client(trim($inv['username']))['totalGB'] ?? 0);
+    $calls = cb(U1, 'whale_volok_' . $PID . '_10');
+    $after = intval(client(trim($inv['username']))['totalGB'] ?? 0);
+    ok('10 GB pack added to the panel client', $after === $before + 10 * 1024 ** 3, "before=$before after=$after");
+    ok('wallet charged 128,000', intval(user_row(U1)['Balance']) === 72000, user_row(U1)['Balance']);
+    ok('user told the new total', (bool) cap_find($calls, 'اضافه شد', U1));
+    $log = whale_q("SELECT reason FROM whale_balance_log WHERE user_id = ? ORDER BY id DESC LIMIT 1", [U1])->fetchColumn();
+    ok('balance log names the pack', strpos((string) $log, 'حجم اضافه') !== false, $log);
+    ok('service_other row keeps refund maths consistent', (bool) whale_q("SELECT 1 FROM service_other WHERE username = ? AND type = 'extra_user' AND price = 128000", [trim($inv['username'])])->fetchColumn());
+    set_balance(U1, 1000);
+    $calls = cb(U1, 'whale_volok_' . $PID . '_25');
+    ok('short balance goes to the payment step', (bool) cap_find($calls, 'روش پرداخت', U1) && (user_row(U1)['Processing_value_tow'] ?? '') === 'whale_volume', user_row(U1)['Processing_value_tow'] ?? '');
+}
+
 /* ---------- summary ---------- */
 $pass = count(array_filter($RESULTS, fn($r) => $r[1]));
 $fail = count($RESULTS) - $pass;

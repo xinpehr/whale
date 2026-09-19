@@ -2119,6 +2119,7 @@ function bottext_apply_overrides(array &$base, $lang)
     $overrideFile = __DIR__ . '/lang/override/' . $lang . '.php';
     if (is_file($overrideFile) && is_array($overrideTexts = include $overrideFile))
         $base = array_replace_recursive($base, $overrideTexts);
+    if (is_file(__DIR__ . '/whale/lang/' . $lang . '.php') && is_array($whaleTexts = include __DIR__ . '/whale/lang/' . $lang . '.php')) $base = array_replace_recursive($base, $whaleTexts); // WhaleVPN
     customEmojiLabels([]);
     $row = select("setting", "*", null, null, "select");
     $raw = is_array($row) ? ($row['text_edit'] ?? null) : null;

@@ -438,6 +438,109 @@ function whale_device_confirm($user_id, $message_id, $id_invoice)
     whale_start_gateway_payment($user_id, $due, 'whale_device', $id_invoice, whale_t('no_credit', ['price' => whale_money($due)], $user_id));
 }
 
+/* ---------- extra volume packs ---------- */
+
+// [gb => price] from the "gb:price" lines in volume_packs, sorted by size.
+function whale_volume_packs()
+{
+    $packs = [];
+    foreach (preg_split('/\r?\n/', (string) whale_get('volume_packs')) as $line) {
+        if (preg_match('/^\s*(\d+)\s*:\s*(\d+)\s*$/', $line, $m) && intval($m[1]) > 0 && intval($m[2]) > 0) {
+            $packs[intval($m[1])] = intval($m[2]);
+        }
+    }
+    ksort($packs);
+    return $packs;
+}
+
+function whale_volume_show($user_id, $message_id, $id_invoice)
+{
+    whale_answer_callback();
+    $invoice = whale_owned_invoice($user_id, $id_invoice);
+    $packs = whale_volume_packs();
+    if (!$invoice || !$packs) {
+        whale_answer_callback(whale_t('volume_not_sold', [], $user_id), true);
+        return;
+    }
+    global $ManagePanel;
+    $manager = $ManagePanel instanceof ManagePanel ? $ManagePanel : new ManagePanel();
+    $data = $manager->DataUser($invoice['Service_location'], trim($invoice['username']));
+    $left = whale_t('card_unlimited', [], $user_id);
+    if (is_array($data) && floatval($data['data_limit'] ?? 0) > 0) {
+        $bytes = max(0, floatval($data['data_limit']) - floatval($data['used_traffic'] ?? 0));
+        $left = whale_fa_digits(number_format($bytes / (1024 ** 3), 1)) . ' ' . whale_t('card_gb', [], $user_id);
+    }
+    $rows = [];
+    foreach ($packs as $gb => $price) {
+        $rows[] = [['text' => whale_t('btn_volume_pack', ['gb' => $gb, 'price' => whale_money($price)], $user_id), 'callback_data' => 'whale_volok_' . $id_invoice . '_' . $gb]];
+    }
+    $rows[] = [['text' => whale_t('btn_back', [], $user_id), 'callback_data' => 'product_' . $id_invoice]];
+    Editmessagetext($user_id, $message_id, whale_t('volume_pick', ['username' => trim($invoice['username']), 'left' => $left], $user_id), whale_kb($rows));
+}
+
+// Adds $gb to the client on the panel through Mirza's own extra_volume() so reports,
+// refund maths (service_other) and the invoice notifications stay consistent.
+function whale_volume_apply($invoice, $gb, $price)
+{
+    global $ManagePanel;
+    $panel = whale_panel_by_name($invoice['Service_location']);
+    if (!is_array($panel) || ($panel['type'] ?? '') !== 'x-ui_single' || $gb <= 0) {
+        return [false, 'volume_failed'];
+    }
+    $manager = $ManagePanel instanceof ManagePanel ? $ManagePanel : new ManagePanel();
+    $username = trim($invoice['username']);
+    $before = $manager->DataUser($invoice['Service_location'], $username);
+    $res = $manager->extra_volume($username, $panel['code_panel'], intval($gb));
+    if (!is_array($res) || empty($res['status'])) {
+        return [false, 'volume_failed'];
+    }
+    if ($price > 0) {
+        whale_balance_add($invoice['id_user'], -intval($price), whale_t('reason_volume', ['gb' => $gb, 'username' => $username], $invoice['id_user']));
+    }
+    whale_q(
+        "INSERT IGNORE INTO service_other (id_user, username, value, type, time, price, output) VALUES (?, ?, ?, 'extra_user', ?, ?, ?)",
+        [$invoice['id_user'], $username, json_encode(['volume_value' => intval($gb), 'priceـper_gig' => $gb > 0 ? intval($price / $gb) : 0, 'old_volume' => $before['data_limit'] ?? null, 'expire_old' => $before['expire'] ?? null]), date('Y/m/d H:i:s'), intval($price), json_encode($res)]
+    );
+    $after = whale_xui_client($panel, $username);
+    $total = is_array($after) ? round(intval($after['totalGB'] ?? 0) / (1024 ** 3), 1) : '';
+    whale_report("➕ <b>خرید حجم اضافه</b>\nکاربر: <code>{$invoice['id_user']}</code>\nسرویس: <code>{$username}</code>\nحجم: {$gb} گیگ\nمبلغ: " . whale_money($price), 'otherservice');
+    return [true, $total];
+}
+
+function whale_volume_confirm($user_id, $message_id, $id_invoice, $gb)
+{
+    $invoice = whale_owned_invoice($user_id, $id_invoice);
+    $packs = whale_volume_packs();
+    $gb = intval($gb);
+    if (!$invoice || !isset($packs[$gb])) {
+        whale_answer_callback(whale_t('volume_not_sold', [], $user_id), true);
+        return;
+    }
+    $price = $packs[$gb];
+    clearSelectCache('user');
+    $user = select("user", "*", "id", $user_id, "select");
+    $balance = intval($user['Balance'] ?? 0);
+    whale_answer_callback();
+    if ($balance >= $price) {
+        [$ok, $res] = whale_volume_apply($invoice, $gb, $price);
+        $text = $ok
+            ? whale_t('volume_done', ['gb' => $gb, 'username' => trim($invoice['username']), 'total' => whale_fa_digits($res)], $user_id)
+            : whale_t($res, [], $user_id);
+        Editmessagetext($user_id, $message_id, $text, whale_kb([[['text' => whale_t('btn_back', [], $user_id), 'callback_data' => 'product_' . $id_invoice]]]));
+        return;
+    }
+    $shop = select("shopSetting", "*", "Namevalue", "statusdirectpabuy", "select");
+    if (is_array($shop) && ($shop['value'] ?? '') === 'offdirectbuy') {
+        sendmessage($user_id, whale_t('no_credit_topup', [], $user_id), whale_kb([[['text' => '💳', 'callback_data' => 'Add_Balance']]]), 'HTML');
+        return;
+    }
+    $due = $price - max(0, $balance);
+    $minCard = intval(select("PaySetting", "ValuePay", "NamePay", "minbalancecart", "select")['ValuePay'] ?? 0);
+    $minAgent = intval(json_decode((string) (select("PaySetting", "ValuePay", "NamePay", "minbalance", "select")['ValuePay'] ?? ''), true)[$user['agent'] ?? 'f'] ?? 0);
+    $due = max($due, $minCard, $minAgent);
+    whale_start_gateway_payment($user_id, $due, 'whale_volume', $id_invoice . '|' . $gb, whale_t('no_credit', ['price' => whale_money($due)], $user_id));
+}
+
 /* ---------- renewal from wallet (mini app) ---------- */
 
 function whale_renew_products($panel, $agent)
@@ -534,10 +637,30 @@ function whale_renew_start_gateway($user, $invoice, $plan)
 
 function whale_direct_payment($steppay, $Payment_report, $user)
 {
-    if (!is_array($steppay) || ($steppay[0] ?? '') !== 'whale_device') {
+    if (!is_array($steppay) || !in_array($steppay[0] ?? '', ['whale_device', 'whale_volume'], true)) {
         return false;
     }
     $paid = intval($Payment_report['price']);
+    if ($steppay[0] === 'whale_volume') {
+        $invoice = select("invoice", "*", "id_invoice", $steppay[1] ?? '', "select");
+        $gb = intval($steppay[2] ?? 0);
+        $packs = whale_volume_packs();
+        whale_balance_add($user['id'], $paid, whale_t('reason_topup', [], $user['id']));
+        update("Payment_report", "payment_Status", "paid", "id_order", $Payment_report['id_order']);
+        if (!is_array($invoice) || !isset($packs[$gb])) {
+            sendmessage($user['id'], whale_t('volume_failed', [], $user['id']), null, 'HTML');
+            return true;
+        }
+        clearSelectCache('user');
+        $fresh = select("user", "*", "id", $user['id'], "select");
+        if (intval($fresh['Balance']) < $packs[$gb]) {
+            sendmessage($user['id'], whale_t('no_credit_topup', [], $user['id']), null, 'HTML');
+            return true;
+        }
+        [$ok, $res] = whale_volume_apply($invoice, $gb, $packs[$gb]);
+        sendmessage($user['id'], $ok ? whale_t('volume_done', ['gb' => $gb, 'username' => trim($invoice['username']), 'total' => whale_fa_digits($res)], $user['id']) : whale_t($res, [], $user['id']), null, 'HTML');
+        return true;
+    }
     $invoice = select("invoice", "*", "id_invoice", $steppay[1] ?? '', "select");
     whale_balance_add($user['id'], $paid, whale_t('reason_topup', [], $user['id']));
     update("Payment_report", "payment_Status", "paid", "id_order", $Payment_report['id_order']);
