@@ -702,6 +702,27 @@ $calls = cb(U1, 'product_' . $PID);
 ok('card button hidden when switched off', !cap_find($calls, 'whale_card_' . $PID));
 whale_set('card_enabled', 1);
 
+section('live plans: volume, duration and device limit reach the panel');
+whale_q("UPDATE user SET roll_Status = 1, verify = '1', step = 'home', token = ? WHERE id = ?", [bin2hex(random_bytes(20)), U3]);
+clearSelectCache('user');
+foreach (['orca1' => [50, 30, 2], 'beluga3' => [60, 90, 1]] as $code => [$gb, $days, $dev]) {
+    $plan = whale_q("SELECT * FROM product WHERE code_product = ?", [$code])->fetch(PDO::FETCH_ASSOC);
+    if (!$plan) {
+        ok("plan $code exists", false);
+        continue;
+    }
+    set_balance(U3, intval($plan['price_product']) + 1000);
+    [$res] = mini_purchase(U3, $code);
+    $inv = latest_invoice(U3, false);
+    ok("plan $code purchased", !empty($res['success']) && $inv, json_encode($res, JSON_UNESCAPED_UNICODE));
+    $c = $inv ? client(trim($inv['username'])) : null;
+    ok("plan $code: {$gb} GB on the panel", $c && intval($c['totalGB']) === $gb * 1024 ** 3, json_encode($c));
+    $left = $c ? (intval($c['expiryTime']) / 1000 - time()) / 86400 : 0;
+    ok("plan $code: {$days} days on the panel", abs($left - $days) < 1.5 || intval($c['expiryTime'] ?? 0) < 0, (string) round($left, 2));
+    ok("plan $code: {$dev} device(s) on the panel", $c && intval($c['limitIp']) === $dev, json_encode($c['limitIp'] ?? null));
+    ok("plan $code: wallet charged the plan price", intval(user_row(U3)['Balance']) === 1000, user_row(U3)['Balance']);
+}
+
 /* ---------- summary ---------- */
 $pass = count(array_filter($RESULTS, fn($r) => $r[1]));
 $fail = count($RESULTS) - $pass;
