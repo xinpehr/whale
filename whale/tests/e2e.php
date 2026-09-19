@@ -308,6 +308,7 @@ $off = cap_offset();
 telegram('sendmessage', ['chat_id' => U1, 'text' => "📍 موقعیت سرویس : " . $PANEL['name_panel'], 'reply_markup' => json_encode(['inline_keyboard' => [[['text' => 'buy', 'callback_data' => 'confirmandgetservice'], ['text' => 'del', 'callback_data' => 'removeauto-abc']]]])]);
 $c = cap_since($off)[0] ?? null;
 ok('no button colours while button_styles is off', !kb_has($c, '"style":'), $c['data']['reply_markup'] ?? '');
+ok('panel name replaced by sub wording', $c && strpos($c['data']['text'], 'همه‌ی لوکیشن‌ها') !== false, $c['data']['text'] ?? '');
 whale_set('button_styles', 1);
 $off = cap_offset();
 telegram('sendmessage', ['chat_id' => U1, 'text' => 'x', 'reply_markup' => json_encode(['inline_keyboard' => [[['text' => 'buy', 'callback_data' => 'confirmandgetservice'], ['text' => 'del', 'callback_data' => 'removeauto-abc']]]])]);
@@ -315,7 +316,6 @@ $c = cap_since($off)[0] ?? null;
 ok('confirm button is green when switched on', kb_has($c, '"style":"success"'));
 ok('delete button is red when switched on', kb_has($c, '"style":"danger"'));
 whale_set('button_styles', 0);
-ok('panel name replaced by sub wording', $c && strpos($c['data']['text'], 'همه‌ی لوکیشن‌ها') !== false, $c['data']['text'] ?? '');
 
 section('users');
 new_user(U1);
