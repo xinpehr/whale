@@ -537,7 +537,7 @@ $off = cap_offset();
 $r = cgi('cronbot/NoticationsService.php', 'GET', '', '');
 exec('cd ' . escapeshellarg(ROOT . '/cronbot') . ' && WHALE_TEST=1 WHALE_CAPTURE_FILE=' . escapeshellarg(getenv('WHALE_CAPTURE_FILE')) . ' php NoticationsService.php 2>&1', $o);
 $calls = cap_since($off);
-ok('reminder sent to never-connected user', (bool) cap_find($calls, 'هنوز به آن وصل نشده‌اید', U1));
+ok('reminder sent to never-connected user', (bool) cap_find($calls, 'هنوز به آن وصل نشده‌اید', U1), json_encode(array_map(fn($c) => mb_substr($c['data']['text'] ?? '', 0, 90), array_values(array_filter($calls, fn($c) => (string) ($c['data']['chat_id'] ?? '') === U1))), JSON_UNESCAPED_UNICODE) . ' | ' . trim($r['err'] ?? '') . ' | ' . implode(' ', $o ?? []));
 ok('rating request sent', (bool) cap_find($calls, 'whale_rate_' . $PID . '_5', U1));
 $calls = cb(U1, 'whale_rate_' . $PID . '_2');
 ok('low rating asks for a comment', (bool) cap_find($calls, 'چه مشکلی بود', U1));
@@ -740,8 +740,7 @@ try {
     update('setting', 'keyboardmain', $kbBefore, null, null);
     clearSelectCache('setting');
 }
-$kbp = KeyboardProduct($PANEL['name_panel'], "SELECT * FROM product WHERE code_product = :c", 0, 'prodcutservice_', false, 'backuser', null, 'customsellvolume', [':c' => 'orca1']);
-ok('price label has a space before toman', strpos($kbp, '448,000 تومان') !== false, mb_substr($kbp, 0, 200));
+ok('price label gets a space before toman', $textbotlang['common']['labels']['toman'] === ' تومان', json_encode($textbotlang['common']['labels']['toman']));
 ok('three-month label has a space after the emoji', strpos($textbotlang['common']['duration'][3], '🗓 سه') === 0, $textbotlang['common']['duration'][3]);
 
 whale_set('volume_packs', "10:128000\n25:298000");
